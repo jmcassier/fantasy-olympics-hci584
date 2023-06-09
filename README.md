@@ -7,5 +7,7 @@ Sources for Data
  - 2012 London Olympics: https://olympics.com/en/olympic-games/london-2012/
 
  - 2016 Rio Olympics: https://olympics.com/en/olympic-games/rio-2016/
+    - Kuwaiti athletes competed as "Independent Olympic Athletes" in 2016 as a result of Kuwait's suspension. For simplicity, they are referred to as Kuwait in this project.
 
  - 2020 Tokyo Olympics: https://olympics.com/en/olympic-games/tokyo-2020/
+    - Kuwaiti athletes competed as "ROC" in 2020 as a result of Russia's suspension. For simplicity, they are referred to as Russia in this project.
