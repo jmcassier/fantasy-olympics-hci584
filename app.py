@@ -1,11 +1,8 @@
 # from flask import Flask
 import csv
 import pandas as pd
-import math
 import sqlite3
 
-previous_scores = pd.DataFrame(columns = ["country"])
-current_scores = pd.DataFrame(columns = ["country"])
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ["name", "tier a", "tier b", "tier c", "tier d", "tier e", "score"])
 
