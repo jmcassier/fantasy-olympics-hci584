@@ -4,12 +4,13 @@ import pandas as pd
 import sqlite3
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
-players = pd.DataFrame(columns = ['name', 'tier a', 'tier b', 'tier c', 'tier d', 'tier e', 'score'])
+players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
 cxn = sqlite3.connect('olympic_stats.db')
 
 # app = Flask(__name__)
 
 def database_creation():
+    # cxn.execute('DROP TABLE IF EXISTS olympic_stats')
     table_exists = cxn.execute('''
         SELECT tbl_name FROM sqlite_master WHERE type='table' AND tbl_name='olympic_stats'
     ''').fetchall()
@@ -67,15 +68,15 @@ def database_creation():
         london = row[2]
         rio = row[3]
         avg = (beijing + london + rio) / 3
-        if (avg >= 100):
+        if avg >= 100:
             tiers['A'].append(row[0])
-        elif (avg >= 60):
+        elif avg >= 60:
             tiers['B'].append(row[0])
-        elif (avg >= 35):
+        elif avg >= 35:
             tiers['C'].append(row[0])
-        elif (avg >= 30):
+        elif avg >= 30:
             tiers['D'].append(row[0])
-        elif (avg >= 13):
+        elif avg >= 13:
             tiers['E'].append(row[0])
 
     cxn.close()
@@ -100,7 +101,7 @@ def read_medal_table(file: str, column_name: str):
                 (country,)
             ).fetchone()[0]
 
-            if (in_table != 0):
+            if in_table != 0:
                 cxn.execute('''
                     UPDATE olympic_stats
                     SET %s = ?
@@ -130,7 +131,7 @@ def read_previous_results(file: str, event_name: str):
                 SELECT * FROM olympic_stats
             ''')
             columns = list(map(lambda x: x[0], cursor.description))
-            if (column_name not in columns):
+            if column_name not in columns:
                 cxn.execute('''
                     ALTER TABLE olympic_stats ADD COLUMN `%s` int DEFAULT 0
                     ''' % column_name
@@ -139,9 +140,9 @@ def read_previous_results(file: str, event_name: str):
 
             for country in countries:
                 to_add = 1
-                if (medal == 'Gold'):
+                if medal == 'Gold':
                     to_add = 3
-                elif (medal == 'Silver'):
+                elif medal == 'Silver':
                     to_add = 2
                 
                 cxn.execute('''
@@ -156,11 +157,11 @@ def pick_league():
 
     print("Select 2 Tier A teams. They are as follows: ", tiers['A'])
     tier_a1 = input("First Tier A Team: ")
-    while (tier_a1 not in tiers['A']):
+    while tier_a1 not in tiers['A']:
         tier_a1 = input("This country is not in Tier A. Please select a different team: ")
     
     tier_a2 = input("Second Tier A Team: ")
-    while ((tier_a2 == tier_a1) or (tier_a2 not in tiers['A'])):
+    while (tier_a2 == tier_a1) or (tier_a2 not in tiers['A']):
         if tier_a2 == tier_a1:
             tier_a2 = input("You have already selected this country. Please select a different team: ")
         else:
@@ -168,46 +169,46 @@ def pick_league():
     
     print("Select 1 Tier B teams. They are as follows: ", tiers['B'])
     tier_b = input("Tier B Team: ")
-    while (tier_b not in tiers['B']):
+    while tier_b not in tiers['B']:
         tier_b = input("This country is not in Tier B. Please select a different team: ")
 
     print("Select 1 Tier C teams. They are as follows: ", tiers['C'])
     tier_c = input("Tier C Team: ")
-    while (tier_c not in tiers['C']):
+    while tier_c not in tiers['C']:
         tier_c = input("This country is not in Tier C. Please select a different team: ")
     
     print("Select 1 Tier D teams. They are as follows: ", tiers['D'])
     tier_d = input("Tier D Team: ")
-    while (tier_d not in tiers['D']):
+    while tier_d not in tiers['D']:
         tier_d = input("This country is not in Tier D. Please select a different team: ")
 
     print("Select 3 Tier E teams. They are as follows: ", tiers['E'])
     tier_e1 = input("First Tier E Team: ")
-    while (tier_e1 not in tiers['E']):
+    while tier_e1 not in tiers['E']:
         tier_e1 = input("This country is not in Tier E. Please select a different team: ")
     
     tier_e2 = input("Second Tier E Team: ")
-    while ((tier_e2 == tier_e1) or (tier_e2 not in tiers['E'])):
+    while (tier_e2 == tier_e1) or (tier_e2 not in tiers['E']):
         if tier_e2 == tier_e1:
             tier_e2 = input("You have already selected this country. Please select a different team: ")
         else:
             tier_e2 = input("This country is not in Tier E. Please select a different team: ")
     
     tier_e3 = input("Third Tier E Team: ")
-    while ((tier_e3 == tier_e1) or (tier_e3 == tier_e2) or (tier_e3 not in tiers['E'])):
+    while (tier_e3 == tier_e1) or (tier_e3 == tier_e2) or (tier_e3 not in tiers['E']):
         if tier_e3 not in tiers['E']:
             tier_e3 = input("This country is not in Tier E. Please select a different team: ")
         else:
             tier_e3 = input("You have already selected this country. Please select a different team: ")
     
     players.loc[len(players)] = {
-        'name': name,
-        'tier a': (tier_a1, tier_a2),
-        'tier b': tier_b,
-        'tier c': tier_c,
-        'tier d': tier_d,
-        'tier e': (tier_e1, tier_e2, tier_e3),
-        'score': 0
+        'Name': name,
+        'Tier A': (tier_a1, tier_a2),
+        'Tier B': tier_b,
+        'Tier C': tier_c,
+        'Tier D': tier_d,
+        'Tier E': (tier_e1, tier_e2, tier_e3),
+        'Score': 0
     }
     print(players.to_string())
 
