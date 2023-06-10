@@ -16,6 +16,7 @@ def database_creation():
             Country text primary key
         );
     ''')
+    cxn.commit()
 
     read_medal_table('./medal-data/beijing-medal-table.csv', 'Beijing', cxn)
     read_medal_table('./medal-data/london-medal-table.csv', 'London', cxn)
@@ -53,6 +54,26 @@ def database_creation():
     read_previous_results('./medal-data/water-polo/previous-water-polo.csv', 'Water Polo', cxn)
     read_previous_results('./medal-data/weightlifting/previous-weightlifting.csv', 'Weightlifting', cxn)
     read_previous_results('./medal-data/wrestling/previous-wrestling.csv', 'Wrestling', cxn)
+
+    rows = cxn.execute('''
+        SELECT * FROM olympic_stats
+    ''').fetchall()
+
+    for row in rows:
+        beijing = row[1]
+        london = row[2]
+        rio = row[3]
+        avg = (beijing + london + rio) / 3
+        if (avg >= 100):
+            tiers['A'].append(row[0])
+        elif (avg >= 60):
+            tiers['B'].append(row[0])
+        elif (avg >= 35):
+            tiers['C'].append(row[0])
+        elif (avg >= 30):
+            tiers['D'].append(row[0])
+        elif (avg >= 13):
+            tiers['E'].append(row[0])
 
     cxn.close()
 
@@ -106,7 +127,6 @@ def read_previous_results(file: str, event_name: str, cxn):
                 SELECT * FROM olympic_stats
             ''')
             columns = list(map(lambda x: x[0], cursor.description))
-            # print(columns)
             if (column_name not in columns):
                 cxn.execute('''
                     ALTER TABLE olympic_stats ADD COLUMN `%s` int DEFAULT 0
@@ -127,9 +147,5 @@ def read_previous_results(file: str, event_name: str, cxn):
                     (to_add, country)
                 )
                 cxn.commit()
-    
-
-
-                
 
 database_creation()
