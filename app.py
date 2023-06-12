@@ -10,13 +10,21 @@ cxn = sqlite3.connect('olympic_stats.db')
 # app = Flask(__name__)
 
 def database_creation():
-    # cxn.execute('DROP TABLE IF EXISTS olympic_stats')
-    table_exists = cxn.execute('''
-        SELECT tbl_name FROM sqlite_master WHERE type='table' AND tbl_name='olympic_stats'
+    cxn.execute('DROP TABLE IF EXISTS olympic_stats')
+    table_by_cycle_exists = cxn.execute('''
+        SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_olympic_cycle' OR tbl_name='scores_by_event')
     ''').fetchall()
-    if table_exists == []:
+
+    if len(table_by_cycle_exists) != 2:
+        cxn.execute('DROP TABLE IF EXISTS scores_by_olympic_cycle')
+        cxn.execute('DROP TABLE IF EXISTS scores_by_event')
         cxn.execute('''
-            CREATE TABLE olympic_stats (
+            CREATE TABLE scores_by_olympic_cycle (
+                Country text primary key
+            );
+        ''')
+        cxn.execute('''
+            CREATE TABLE scores_by_event (
                 Country text primary key
             );
         ''')
@@ -60,7 +68,7 @@ def database_creation():
         read_previous_results('./medal-data/wrestling/previous-wrestling.csv', 'Wrestling')
 
     rows = cxn.execute('''
-        SELECT * FROM olympic_stats
+        SELECT * FROM scores_by_olympic_cycle
     ''').fetchall()
 
     for row in rows:
@@ -84,7 +92,7 @@ def database_creation():
 def read_medal_table(file: str, column_name: str):
     with open(file, newline = '') as medal_table:
         cxn.execute('''
-            ALTER TABLE olympic_stats ADD COLUMN %s int DEFAULT 0
+            ALTER TABLE scores_by_olympic_cycle ADD COLUMN %s int DEFAULT 0
             ''' % (column_name)
         )
         cxn.commit()
@@ -95,27 +103,33 @@ def read_medal_table(file: str, column_name: str):
             
             in_table = cxn.execute('''
                 SELECT COUNT(*)
-                FROM olympic_stats
-                WHERE country = ?
+                FROM scores_by_olympic_cycle
+                WHERE Country = ?
                 ''',
                 (country,)
             ).fetchone()[0]
 
             if in_table != 0:
                 cxn.execute('''
-                    UPDATE olympic_stats
+                    UPDATE scores_by_olympic_cycle
                     SET %s = ?
-                    WHERE country = ?
+                    WHERE Country = ?
                     ''' % (column_name),
                     (score, country)
                 )
                 cxn.commit()
             else:
                 cxn.execute('''
-                    INSERT INTO olympic_stats (country, %s)
+                    INSERT INTO scores_by_olympic_cycle (Country, %s)
                     VALUES (?, ?)
                     ''' % (column_name),
                     (country, score)
+                )
+                cxn.execute('''
+                    INSERT INTO scores_by_event (Country)
+                    VALUES (?)
+                    ''',
+                    (country,)
                 )
                 cxn.commit()
 
@@ -128,12 +142,12 @@ def read_previous_results(file: str, event_name: str):
             countries = row[2:]
 
             cursor = cxn.execute('''
-                SELECT * FROM olympic_stats
+                SELECT * FROM scores_by_event
             ''')
             columns = list(map(lambda x: x[0], cursor.description))
             if column_name not in columns:
                 cxn.execute('''
-                    ALTER TABLE olympic_stats ADD COLUMN `%s` int DEFAULT 0
+                    ALTER TABLE scores_by_event ADD COLUMN `%s` int DEFAULT 0
                     ''' % column_name
                 )
                 cxn.commit()
@@ -146,7 +160,7 @@ def read_previous_results(file: str, event_name: str):
                     to_add = 2
                 
                 cxn.execute('''
-                    UPDATE olympic_stats SET `%s` = `%s` + ? WHERE country = ?
+                    UPDATE scores_by_event SET `%s` = `%s` + ? WHERE Country = ?
                     ''' % (column_name, column_name),
                     (to_add, country)
                 )
