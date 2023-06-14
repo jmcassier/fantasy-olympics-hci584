@@ -5,7 +5,6 @@ import sqlite3
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
-events = []
 cxn = sqlite3.connect('olympic_stats.db')
 
 # app = Flask(__name__)
@@ -13,6 +12,7 @@ cxn = sqlite3.connect('olympic_stats.db')
 def database_creation():
     # cxn.execute('DROP TABLE IF EXISTS scores_by_olympic_cycle')
     # cxn.execute('DROP TABLE IF EXISTS scores_by_event')
+    # cxn.execute('DROP TABLE IF EXISTS event_athletes')
     table_by_cycle_exists = cxn.execute('''
         SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_olympic_cycle')
     ''').fetchall()
