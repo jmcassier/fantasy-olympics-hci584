@@ -101,8 +101,6 @@ def database_creation():
         elif avg >= 13:
             tiers['E'].append(row[0])
 
-    not_in_table = []
-
     if event_athletes_exists == []:
         print("creating by athletes table")
         cxn.execute('''
