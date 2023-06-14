@@ -5,26 +5,28 @@ import sqlite3
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
+events = []
 cxn = sqlite3.connect('olympic_stats.db')
 
 # app = Flask(__name__)
 
 def database_creation():
-    cxn.execute('DROP TABLE IF EXISTS olympic_stats')
+    # cxn.execute('DROP TABLE IF EXISTS scores_by_olympic_cycle')
+    # cxn.execute('DROP TABLE IF EXISTS scores_by_event')
     table_by_cycle_exists = cxn.execute('''
-        SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_olympic_cycle' OR tbl_name='scores_by_event')
+        SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_olympic_cycle')
+    ''').fetchall()
+    table_by_event_exists = cxn.execute('''
+        SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_event')
+    ''').fetchall()
+    event_athletes_exists = cxn.execute('''
+        SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='event_athletes')
     ''').fetchall()
 
-    if len(table_by_cycle_exists) != 2:
-        cxn.execute('DROP TABLE IF EXISTS scores_by_olympic_cycle')
-        cxn.execute('DROP TABLE IF EXISTS scores_by_event')
+    if table_by_cycle_exists == []:
+        print("creating by cycle")
         cxn.execute('''
             CREATE TABLE scores_by_olympic_cycle (
-                Country text primary key
-            );
-        ''')
-        cxn.execute('''
-            CREATE TABLE scores_by_event (
                 Country text primary key
             );
         ''')
@@ -33,6 +35,15 @@ def database_creation():
         read_medal_table('./medal-data/beijing-medal-table.csv', 'Beijing')
         read_medal_table('./medal-data/london-medal-table.csv', 'London')
         read_medal_table('./medal-data/rio-medal-table.csv', 'Rio')
+
+    if table_by_event_exists == []:
+        print("creating by event")
+        cxn.execute('''
+            CREATE TABLE scores_by_event (
+                Country text primary key
+            );
+        ''')
+        cxn.commit()
 
         read_previous_results('./medal-data/archery/previous-archery.csv', 'Archery')
         read_previous_results('./medal-data/athletics/previous-athletics.csv', 'Athletics')
@@ -72,6 +83,9 @@ def database_creation():
     ''').fetchall()
 
     for row in rows:
+        # handle North Korea not participating in the 2020 Olympic Games
+        if row[0] == 'North Korea':
+            continue
         beijing = row[1]
         london = row[2]
         rio = row[3]
@@ -87,13 +101,32 @@ def database_creation():
         elif avg >= 13:
             tiers['E'].append(row[0])
 
-    cxn.close()
+    not_in_table = []
+
+    if event_athletes_exists == []:
+        print("creating by athletes table")
+        cxn.execute('''
+            CREATE TABLE event_athletes (
+                Event text primary key,
+                Athlete1 text DEFAULT NULL,
+                Athlete2 text DEFAULT NULL,
+                Athlete3 text DEFAULT NULL,
+                Athlete4 text DEFAULT NULL,
+                Athlete5 text DEFAULT NULL,
+                Athlete6 text DEFAULT NULL,
+                Athlete7 text DEFAULT NULL,
+                Athlete8 text DEFAULT NULL
+            );
+        ''')
+        cxn.commit()
+        read_event_athletes('./medal-data/tokyo-event-list.csv')
+
 
 def read_medal_table(file: str, column_name: str):
     with open(file, newline = '') as medal_table:
-        cxn.execute('''
-            ALTER TABLE scores_by_olympic_cycle ADD COLUMN %s int DEFAULT 0
-            ''' % (column_name)
+        cxn.execute(f'''
+            ALTER TABLE scores_by_olympic_cycle ADD COLUMN {column_name} int DEFAULT 0
+            '''
         )
         cxn.commit()
         reader = csv.reader(medal_table, quotechar = '|')
@@ -101,7 +134,7 @@ def read_medal_table(file: str, column_name: str):
             score = (int(row[1]) * 3) + (int(row[2]) * 2) + int(row[3])
             country = row[0]
             
-            in_table = cxn.execute('''
+            country_in_table = cxn.execute('''
                 SELECT COUNT(*)
                 FROM scores_by_olympic_cycle
                 WHERE Country = ?
@@ -109,27 +142,21 @@ def read_medal_table(file: str, column_name: str):
                 (country,)
             ).fetchone()[0]
 
-            if in_table != 0:
-                cxn.execute('''
+            if country_in_table != 0:
+                cxn.execute(f'''
                     UPDATE scores_by_olympic_cycle
-                    SET %s = ?
+                    SET {column_name} = ?
                     WHERE Country = ?
-                    ''' % (column_name),
+                    ''',
                     (score, country)
                 )
                 cxn.commit()
             else:
-                cxn.execute('''
-                    INSERT INTO scores_by_olympic_cycle (Country, %s)
+                cxn.execute(f'''
+                    INSERT INTO scores_by_olympic_cycle (Country, {column_name})
                     VALUES (?, ?)
-                    ''' % (column_name),
-                    (country, score)
-                )
-                cxn.execute('''
-                    INSERT INTO scores_by_event (Country)
-                    VALUES (?)
                     ''',
-                    (country,)
+                    (country, score)
                 )
                 cxn.commit()
 
@@ -146,25 +173,58 @@ def read_previous_results(file: str, event_name: str):
             ''')
             columns = list(map(lambda x: x[0], cursor.description))
             if column_name not in columns:
-                cxn.execute('''
-                    ALTER TABLE scores_by_event ADD COLUMN `%s` int DEFAULT 0
-                    ''' % column_name
+                cxn.execute(f'''
+                    ALTER TABLE scores_by_event ADD COLUMN `{column_name}` int DEFAULT 0
+                    '''
                 )
                 cxn.commit()
 
             for country in countries:
+                if country == '':
+                    continue
                 to_add = 1
                 if medal == 'Gold':
                     to_add = 3
                 elif medal == 'Silver':
                     to_add = 2
                 
-                cxn.execute('''
-                    UPDATE scores_by_event SET `%s` = `%s` + ? WHERE Country = ?
-                    ''' % (column_name, column_name),
-                    (to_add, country)
-                )
-                cxn.commit()
+                country_in_table = cxn.execute('''
+                    SELECT COUNT(*)
+                    FROM scores_by_event
+                    WHERE Country = ?
+                    ''',
+                    (country,)
+                ).fetchone()[0]
+
+                if country_in_table != 0:
+                    cxn.execute(f'''
+                        UPDATE scores_by_event 
+                        SET `{column_name}` = `{column_name}` + ? 
+                        WHERE Country = ?
+                        ''',
+                        (to_add, country)
+                    )
+                    cxn.commit()
+                else:
+                    cxn.execute(f'''
+                        INSERT INTO scores_by_event (Country, `{column_name}`)
+                        VALUES (?, ?)
+                        ''',
+                        (country, to_add)
+                    )
+                    cxn.commit()
+
+def read_event_athletes(file: str):
+    with open(file, newline = '') as event_list:
+        reader = csv.reader(event_list, quotechar = '|')
+        for event in reader:
+            cxn.execute(f'''
+                INSERT INTO event_athletes
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
+                (event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7], event[8])
+            )
+            cxn.commit()
 
 def pick_league():
     name = input("Enter your name: ")
@@ -217,18 +277,21 @@ def pick_league():
     
     players.loc[len(players)] = {
         'Name': name,
-        'Tier A': (tier_a1, tier_a2),
+        'Tier A': [tier_a1, tier_a2],
         'Tier B': tier_b,
         'Tier C': tier_c,
         'Tier D': tier_d,
-        'Tier E': (tier_e1, tier_e2, tier_e3),
+        'Tier E': [tier_e1, tier_e2, tier_e3],
         'Score': 0
     }
     print(players.to_string())
+
+def game_play():
+    return
 
 def end_game():
     cxn.close()
 
 database_creation()
-pick_league()
+# pick_league()
 end_game()
