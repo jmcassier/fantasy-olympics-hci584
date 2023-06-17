@@ -2,10 +2,15 @@
 import csv
 import pandas as pd
 import sqlite3
+import random
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
 cxn = sqlite3.connect('olympic_stats.db')
+unplayed_events = []
+new_events = []
+dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling'] # these events always give 2 bronze medals
+game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
 
 # app = Flask(__name__)
 
@@ -118,6 +123,22 @@ def database_creation():
         ''')
         cxn.commit()
         read_event_athletes('./medal-data/tokyo-event-list.csv')
+    else:
+        events = cxn.execute('''
+            SELECT Event
+            FROM event_athletes
+        ''').fetchall()
+        for event in events:
+            unplayed_events.append(event[0])
+    
+    
+    cursor = cxn.execute('''
+        SELECT * FROM scores_by_event
+    ''')
+    previously_played = list(map(lambda x: x[0], cursor.description))
+    for unplayed in unplayed_events:
+        if unplayed not in previously_played:
+            new_events.append(unplayed)
 
 
 def read_medal_table(file: str, column_name: str):
@@ -216,7 +237,8 @@ def read_event_athletes(file: str):
     with open(file, newline = '') as event_list:
         reader = csv.reader(event_list, quotechar = '|')
         for event in reader:
-            cxn.execute(f'''
+            unplayed_events.append(event[0])
+            cxn.execute('''
                 INSERT INTO event_athletes
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''',
@@ -285,11 +307,123 @@ def pick_league():
     print(players.to_string())
 
 def game_play():
-    return
+    while len(unplayed_events) > 0:
+        curr_event = random.choice(unplayed_events)
+        unplayed_events.remove(curr_event)
+        athletes = cxn.execute('''
+            SELECT *
+            FROM event_athletes
+            WHERE Event = ?
+            ''',
+            (curr_event,)
+        ).fetchone()
+
+        if athletes[7] == '' and athletes[8] == '':
+            athletes = list(athletes[1:7])
+        else:
+            athletes = list(athletes[1:])
+
+        
+        previously_played = False if curr_event in new_events else True
+        event_medalists = []
+        num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
+        print(f'{curr_event}: {num_medals} medals')
+
+        if previously_played:
+            weighted_athletes = []
+            for athlete in athletes:
+                weight = cxn.execute(f'''
+                    SELECT `{curr_event}`
+                    FROM scores_by_event
+                    WHERE country = ?
+                    ''',
+                    (athlete,)
+                ).fetchone()
+                if weight is not None:
+                    weighted_athletes.append(weight[0]+1)
+                else:
+                    weighted_athletes.append(1)
+            for index in range(0, num_medals):
+                medalist = random.choices(athletes, weights = weighted_athletes)[0]
+                print(medalist)
+                medalist_index = athletes.index(medalist)
+                athletes.remove(medalist)
+                del weighted_athletes[medalist_index]
+                event_medalists.append(medalist)
+                if index == 0:
+                    update_game_medals(medalist, 'Gold')
+                elif index == 1:
+                    update_game_medals(medalist, 'Silver')
+                else:
+                    update_game_medals(medalist)   
+        else:
+            for index in range(0, num_medals):
+                medalist = random.choice(athletes)
+                athletes.remove(medalist)
+                event_medalists.append(medalist)
+                if index == 0:
+                    update_game_medals(medalist, 'Gold')
+                elif index == 1:
+                    update_game_medals(medalist, 'Silver')
+                else:
+                    update_game_medals(medalist)
+        
+        print(f'gold medalist: {event_medalists[0]}' )
+        print(f'silver medalist: {event_medalists[1]}' )
+        if num_medals == 4:
+            print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+        else:
+            print(f'bronze medalist: {event_medalists[2]}' )
+        update_player_scores(event_medalists)
+        
+        input('continue? ')   
+
+def update_game_medals(country: str, medal: str = 'Bronze'):
+    country_idx = None
+    if country in game_medal_table['Country'].unique():
+        country_idx = game_medal_table.index[game_medal_table['Country'] == country][0]
+    else:
+        country_idx = len(game_medal_table)
+        game_medal_table.loc[country_idx] = {'Country': country, 'Gold': 0, 'Silver': 0, 'Bronze': 0, 'Score': 0}
+    
+    game_medal_table.at[country_idx, medal] += 1
+    if medal == 'Gold':
+        game_medal_table.at[country_idx, 'Score'] += 3
+    elif medal == 'Silver':
+        game_medal_table.at[country_idx, 'Score'] += 2
+    elif medal == 'Bronze':
+        game_medal_table.at[country_idx, 'Score'] += 1
+
+def update_player_scores(medalists: list):
+    for index, player in players.iterrows():
+        if in_league(player, medalists[0]):
+            players.at[index, 'Score'] += 3
+        if in_league(player, medalists[1]):
+            players.at[index, 'Score'] += 2
+        if in_league(player, medalists[2]):
+            players.at[index, 'Score'] += 1
+        if (len(medalists) == 4) and in_league(player, medalists[3]):
+            players.at[index, 'Score'] += 1
+
+    print(players)
+
+def in_league(player, country):
+    if country in player[1]:
+        return True
+    if country == player[2]:
+        return True
+    if country == player[3]:
+        return True
+    if country == player[4]:
+        return True
+    if country in player[5]:
+        return True   
+    return False
 
 def end_game():
     cxn.close()
 
 database_creation()
-# pick_league()
+pick_league()
+game_play()
 end_game()
