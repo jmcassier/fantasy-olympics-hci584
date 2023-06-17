@@ -396,29 +396,17 @@ def update_game_medals(country: str, medal: str = 'Bronze'):
 
 def update_player_scores(medalists: list):
     for index, player in players.iterrows():
-        if in_league(player, medalists[0]):
+        league = [player[1][0], player[1][1], player[2], player[3], player[4], player[5][0], player[5][1], player[5][2]]
+        if medalists[0] in league:
             players.at[index, 'Score'] += 3
-        if in_league(player, medalists[1]):
+        if medalists[1] in league:
             players.at[index, 'Score'] += 2
-        if in_league(player, medalists[2]):
+        if medalists[2] in league:
             players.at[index, 'Score'] += 1
-        if (len(medalists) == 4) and in_league(player, medalists[3]):
+        if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
 
     print(players)
-
-def in_league(player, country):
-    if country in player[1]:
-        return True
-    if country == player[2]:
-        return True
-    if country == player[3]:
-        return True
-    if country == player[4]:
-        return True
-    if country in player[5]:
-        return True   
-    return False
 
 def end_game():
     cxn.close()
