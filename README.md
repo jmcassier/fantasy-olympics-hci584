@@ -59,7 +59,7 @@
 
 &nbsp; &nbsp; &nbsp; &nbsp;Once the drafting process has been completed and the main game play has been launched, the scoreboard page would render the data from each person’s league in order of their current ranking in the game and the players would be able to launch the medal tabulation of the first event. If betting is implemented and available for the event, the eligible players will be allowed to bet on the winner of the event. When the medalists have been determined for an event, they will appear on the screen and the scoreboard will be updated to reflect the outcome. Once the players are ready for the game to continue, they will click the continue button for the next event to occur. This process will repeat itself until all events have been completed and the game has concluded. For the scoreboard, I would also want to have a switch view function on the backend that determines which information to show since I want to do a general view and a detailed view for each player’s league (though this is still subject to change). 
 
-## Additional Features (Time Permitting)
+## Nice To Have Additional Features (Time Permitting)
 1) Betting (briefly mentioned above)
    * This will allow a person to bet on the winner of the event if they don't have anyone in their league participating in the event
    * At a simiplistic / easy level, they will only be able to bet a static 1 point.
