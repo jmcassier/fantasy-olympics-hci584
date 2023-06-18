@@ -8,16 +8,37 @@ tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
 cxn = sqlite3.connect('olympic_stats.db')
 unplayed_events = []
-new_events = []
+previously_played_events = []
 dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling'] # these events always give 2 bronze medals
 game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
 
 # app = Flask(__name__)
 
+'''
+This function completes the following preprocessing steps required for the game
+to be played:
+
+    1) creates the following tables in the database:
+        a) score_by_olympic_cycle, which holds the scores a country earned in 
+        the olympics from 2008 - 2016.
+        b) score_by_event, which holds the weights a country has for each event
+        for weight random selection when medalists are determined
+        c) event_athletes, which holds the participants for each event played in
+        game
+
+    2) determines which countries are in each tier for player drafting
+
+    3) sets which events have been previously played to know which events will
+       use weighted selection (new events do not have historical data to create
+       weights from)
+'''
 def database_creation():
+    # uncomment any of the following 3 lines to remove any of the tables in the database to recreate them
     # cxn.execute('DROP TABLE IF EXISTS scores_by_olympic_cycle')
     # cxn.execute('DROP TABLE IF EXISTS scores_by_event')
     # cxn.execute('DROP TABLE IF EXISTS event_athletes')
+
+    # check if the required tables exist
     table_by_cycle_exists = cxn.execute('''
         SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='scores_by_olympic_cycle')
     ''').fetchall()
@@ -28,8 +49,8 @@ def database_creation():
         SELECT tbl_name FROM sqlite_master WHERE type='table' AND (tbl_name='event_athletes')
     ''').fetchall()
 
+    # create scores_by_olympic_cycle if not in the database
     if table_by_cycle_exists == []:
-        print("creating by cycle")
         cxn.execute('''
             CREATE TABLE scores_by_olympic_cycle (
                 Country text primary key
@@ -41,8 +62,8 @@ def database_creation():
         read_medal_table('./medal-data/london-medal-table.csv', 'London')
         read_medal_table('./medal-data/rio-medal-table.csv', 'Rio')
 
+    # create scores_by_event if not in the database
     if table_by_event_exists == []:
-        print("creating by event")
         cxn.execute('''
             CREATE TABLE scores_by_event (
                 Country text primary key
@@ -87,6 +108,7 @@ def database_creation():
         SELECT * FROM scores_by_olympic_cycle
     ''').fetchall()
 
+    # determine which tier a country is in based on average score. if average score is less than 13, it will not be available for drafting
     for row in rows:
         # handle North Korea not participating in the 2020 Olympic Games
         if row[0] == 'North Korea':
@@ -106,8 +128,8 @@ def database_creation():
         elif avg >= 13:
             tiers['E'].append(row[0])
 
+    # create event_athletes if not in the database
     if event_athletes_exists == []:
-        print("creating by athletes table")
         cxn.execute('''
             CREATE TABLE event_athletes (
                 Event text primary key,
@@ -124,6 +146,7 @@ def database_creation():
         cxn.commit()
         read_event_athletes('./medal-data/tokyo-event-list.csv')
     else:
+        # set unplayed events which is completed in read_event_athletes() if that table doesn't exist
         events = cxn.execute('''
             SELECT Event
             FROM event_athletes
@@ -131,16 +154,21 @@ def database_creation():
         for event in events:
             unplayed_events.append(event[0])
     
-    
+    # set previously played events for game play
     cursor = cxn.execute('''
         SELECT * FROM scores_by_event
     ''')
-    previously_played = list(map(lambda x: x[0], cursor.description))
-    for unplayed in unplayed_events:
-        if unplayed not in previously_played:
-            new_events.append(unplayed)
+    global previously_played_events
+    previously_played_events = list(map(lambda x: x[0], cursor.description))
 
+'''
+This function parses through a medal table and places the data into
+score_by_olympic_cycle. The value in each score represents the score a country
+earned at the olympic games
 
+@param file: the file storing the data
+@param column_name: the name of the column to add to table
+'''
 def read_medal_table(file: str, column_name: str):
     with open(file, newline = '') as medal_table:
         cxn.execute(f'''
@@ -149,10 +177,13 @@ def read_medal_table(file: str, column_name: str):
         )
         cxn.commit()
         reader = csv.reader(medal_table, quotechar = '|')
+        
+        # iterate through each country, tabulate the score and add it to the table
         for row in reader:
-            score = (int(row[1]) * 3) + (int(row[2]) * 2) + int(row[3])
+            score = (int(row[1]) * 3) + (int(row[2]) * 2) + int(row[3]) # determine score (3 points for each gold; 2 for each silver; 1 for each bronze)
             country = row[0]
             
+            # check if country is in table
             country_in_table = cxn.execute('''
                 SELECT COUNT(*)
                 FROM scores_by_olympic_cycle
@@ -161,6 +192,7 @@ def read_medal_table(file: str, column_name: str):
                 (country,)
             ).fetchone()[0]
 
+            # add score to table for the associated country
             if country_in_table != 0:
                 cxn.execute(f'''
                     UPDATE scores_by_olympic_cycle
@@ -179,14 +211,23 @@ def read_medal_table(file: str, column_name: str):
                 )
                 cxn.commit()
 
+'''
+This function parses the previous medalists for each event and places the data 
+into scores_by_event. The value placed in each column represents the weight that
+country will receive if they are participating in that event
+
+@param file: the file storing the data
+@param event_name: the event category (e.g. Swimming, Diving, Athletics, etc.)
+'''
 def read_previous_results(file: str, event_name: str):
     with open(file, newline = '') as prev_data:
         reader = csv.reader(prev_data, quotechar = '|')
         for row in reader:
-            column_name = event_name + ' - ' + row[0]
-            medal = row[1]
-            countries = row[2:]
+            column_name = event_name + ' - ' + row[0] # creates the column name in format <event category> - <event name> (e.g. Swimming - 100m Freestyle Men)
+            medal = row[1] # medal color for the row
+            countries = row[2:] # countries that won a medal of the color in previous olympics
 
+            # add event to table if it hasn't already been added
             cursor = cxn.execute('''
                 SELECT * FROM scores_by_event
             ''')
@@ -198,6 +239,7 @@ def read_previous_results(file: str, event_name: str):
                 )
                 cxn.commit()
 
+            # determines how many points a country will add to its weight in the event (3 for gold, 2 for silver, 1 for bronze)
             for country in countries:
                 if country == '':
                     continue
@@ -207,6 +249,7 @@ def read_previous_results(file: str, event_name: str):
                 elif medal == 'Silver':
                     to_add = 2
                 
+                # check if country is already in the table
                 country_in_table = cxn.execute('''
                     SELECT COUNT(*)
                     FROM scores_by_event
@@ -215,6 +258,7 @@ def read_previous_results(file: str, event_name: str):
                     (country,)
                 ).fetchone()[0]
 
+                # update table with data
                 if country_in_table != 0:
                     cxn.execute(f'''
                         UPDATE scores_by_event 
@@ -233,6 +277,12 @@ def read_previous_results(file: str, event_name: str):
                     )
                     cxn.commit()
 
+'''
+This function parses the event participants per event and places them into
+event_athletes
+
+@param file: the file storing the event participants
+'''
 def read_event_athletes(file: str):
     with open(file, newline = '') as event_list:
         reader = csv.reader(event_list, quotechar = '|')
@@ -246,6 +296,9 @@ def read_event_athletes(file: str):
             )
             cxn.commit()
 
+'''
+This function allows for league selection for the players
+'''
 def pick_league():
     name = input("Enter your name: ")
 
@@ -306,7 +359,12 @@ def pick_league():
     }
     print(players.to_string())
 
+'''
+This function performs the majority of the game play operations following league
+selection.
+'''
 def game_play():
+    # play as long as there are event to play
     while len(unplayed_events) > 0:
         curr_event = random.choice(unplayed_events)
         unplayed_events.remove(curr_event)
@@ -318,19 +376,21 @@ def game_play():
             (curr_event,)
         ).fetchone()
 
+        # removes blank entries if there are only 6 participants
         if athletes[7] == '' and athletes[8] == '':
             athletes = list(athletes[1:7])
         else:
             athletes = list(athletes[1:])
 
         
-        previously_played = False if curr_event in new_events else True
+        previously_played = True if curr_event in previously_played_events else False
         event_medalists = []
+        weighted_athletes = []
         num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
-        print(f'{curr_event}: {num_medals} medals')
 
+        # use a weighted random selection if previously played.
         if previously_played:
-            weighted_athletes = []
+            # get the weights for each country
             for athlete in athletes:
                 weight = cxn.execute(f'''
                     SELECT `{curr_event}`
@@ -340,44 +400,47 @@ def game_play():
                     (athlete,)
                 ).fetchone()
                 if weight is not None:
-                    weighted_athletes.append(weight[0]+1)
+                    weighted_athletes.append(weight[0]+1) # add one to offset the default being 1
                 else:
                     weighted_athletes.append(1)
-            for index in range(0, num_medals):
-                medalist = random.choices(athletes, weights = weighted_athletes)[0]
-                print(medalist)
+
+        # determine the medalists
+        for index in range(0, num_medals):
+            medalist = random.choices(athletes, weights = weighted_athletes)[0] if previously_played else random.choice(athletes)
+            event_medalists.append(medalist)
+            # remove weight from weights if previously played
+            if previously_played:
                 medalist_index = athletes.index(medalist)
-                athletes.remove(medalist)
                 del weighted_athletes[medalist_index]
-                event_medalists.append(medalist)
-                if index == 0:
-                    update_game_medals(medalist, 'Gold')
-                elif index == 1:
-                    update_game_medals(medalist, 'Silver')
-                else:
-                    update_game_medals(medalist)   
-        else:
-            for index in range(0, num_medals):
-                medalist = random.choice(athletes)
-                athletes.remove(medalist)
-                event_medalists.append(medalist)
-                if index == 0:
-                    update_game_medals(medalist, 'Gold')
-                elif index == 1:
-                    update_game_medals(medalist, 'Silver')
-                else:
-                    update_game_medals(medalist)
+            athletes.remove(medalist) # remove medalist from participants to avoid duplicate winners
+            
+            # update medal table
+            if index == 0:
+                update_game_medals(medalist, 'Gold')
+            elif index == 1:
+                update_game_medals(medalist, 'Silver')
+            else:
+                update_game_medals(medalist)
         
+        print(curr_event)
         print(f'gold medalist: {event_medalists[0]}' )
         print(f'silver medalist: {event_medalists[1]}' )
         if num_medals == 4:
             print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
         else:
             print(f'bronze medalist: {event_medalists[2]}' )
+        
+        # update scoreboard
         update_player_scores(event_medalists)
         
         input('continue? ')   
 
+'''
+This function updates the medal table for the game throughout the game
+
+@param country: the medalist for the event
+@param medal: the color of the medal the country won
+'''
 def update_game_medals(country: str, medal: str = 'Bronze'):
     country_idx = None
     if country in game_medal_table['Country'].unique():
@@ -394,23 +457,39 @@ def update_game_medals(country: str, medal: str = 'Bronze'):
     elif medal == 'Bronze':
         game_medal_table.at[country_idx, 'Score'] += 1
 
+'''
+This function updates the players score after an event has been played.
+
+@param medalists: a list of the medalists for the event.
+'''
 def update_player_scores(medalists: list):
     for index, player in players.iterrows():
+        # aggregates a persons league into a single list
         league = [player[1][0], player[1][1], player[2], player[3], player[4], player[5][0], player[5][1], player[5][2]]
+        
+        # increases score by 3 if the gold medalist is in their league
         if medalists[0] in league:
             players.at[index, 'Score'] += 3
+        # increases score by 2 if the silver medalist is in their league
         if medalists[1] in league:
             players.at[index, 'Score'] += 2
+        # increases score by 1 if the bronze medalist is in their league
         if medalists[2] in league:
             players.at[index, 'Score'] += 1
+        # increases score by 1 if the bronze medalist is in their league
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
 
     print(players)
 
+'''
+This function goes through required operations to end the game
+'''
 def end_game():
+    # currently just closes the connection to the database; function is a placeholder just in case needed in the future.
     cxn.close()
 
+# execute console game
 database_creation()
 pick_league()
 game_play()
