@@ -17,6 +17,15 @@
    - If the player doesn't guess the winner correctly but their guess ends up with a medal, they will receive 0 points.
    - If the player doesn't guess the winner and their guess fails to medal, they will lose 1 point.
 
+## How To Run & Packages
+Beyond Python, the project currently requires you to install Pandas. To do this, run
+
+	pip install pandas
+
+To run the program, in the project directory in the terminal run the following command:
+ 
+ 	python app.py
+
 ## User Activity Flow
 
 ### Task 1
