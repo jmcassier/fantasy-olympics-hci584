@@ -1,4 +1,5 @@
-# from flask import Flask
+from flask import Flask, render_template, request
+from flask_cachecontrol import dont_cache
 import csv
 import pandas as pd
 import sqlite3
@@ -13,7 +14,47 @@ previously_played_events = []
 dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling'] # these events always give 2 bronze medals
 game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
 
-# app = Flask(__name__)
+app = Flask(__name__)
+
+@app.route('/')
+@dont_cache()
+def home_page():
+    global players, game_medal_table
+    if len(players.index) > 0:
+        players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
+    if len(game_medal_table) > 0:
+        game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
+        database_creation()
+    return render_template('home.html')
+
+@app.route('/draft', methods = ["POST"])
+def draft():
+    player_names = []
+    print(tiers)
+    if (request.method == "POST") and (request.form["submit"] == "Confirm Players"):
+        players_form = request.form.to_dict(flat=False)
+        del players_form["submit"]
+        for player in players_form:
+            name = players_form[player][0]
+            if name == 'Confirm Players':
+                continue
+            player_names.append(name)
+            players.loc[len(players.index)] = {
+                'Name': name,
+                'Tier A': [],
+                'Tier B': None,
+                'Tier C': None,
+                'Tier D': None,
+                'Tier E': [],
+                'Score': 0
+            }
+        
+    
+    print(players)
+
+    return render_template('draft.html')
+
+
 
 '''
 This function completes the following preprocessing steps required for the game
@@ -538,8 +579,11 @@ def end_game():
     # currently just closes the connection to the database; function is a placeholder just in case needed in the future.
     cxn.close()
 
+with app.app_context():
+    database_creation()
+
 # execute console game
-database_creation()
-pick_league()
-game_play()
-end_game()
+# database_creation()
+# pick_league()
+# game_play()
+# end_game()

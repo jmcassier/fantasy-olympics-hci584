@@ -1,0 +1,80 @@
+<html>
+    <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/home.css"
+    </head>
+    <body>
+        <h1 class="title"> Fantasy Olympics </h1>
+        <button type="button" onClick="createNameFields(1)">
+            Single Player
+        </button>
+        <button type="button" onClick="createNameFields(2)">
+            2 Players
+        </button>
+        <button type="button" onClick="createNameFields(3)">
+            3 Players
+        </button>
+        <button type="button" onClick="createNameFields(4)">
+            4 Players
+        </button>
+        <button type="button" onClick="createNameFields(5)">
+            5 Players
+        </button>
+        <button type="button" onClick="createNameFields(6)">
+            6 Players
+        </button>
+        <form action="/draft" id="player_names" method="POST" onsubmit="return validateNames()"></form>
+    </body>
+    <script type="text/javascript">
+        function createNameFields(num_players) {
+            let current_player_count = document.getElementById("player_names").children.length;
+            current_player_count = current_player_count > 0 ? current_player_count - 1 : current_player_count;
+            if (current_player_count < num_players) {
+                if (current_player_count != 0) {
+                    const player_names = document.getElementById("player_names");
+                    player_names.removeChild(player_names.lastChild);
+                }
+                for (let i = 0; i < num_players - current_player_count; i++) {
+                    const player_name = document.createElement('input');
+                    player_name.setAttribute("name", "player_" + (i+current_player_count));
+                    player_name.setAttribute("type", "text");
+                    player_name.required = true;
+                    document.getElementById("player_names").appendChild(player_name);
+                }
+                const submit_button = document.createElement('input');
+                submit_button.setAttribute("type", "submit");
+                submit_button.setAttribute("value", "Confirm Players");
+                submit_button.setAttribute("name", "submit");
+                document.getElementById("player_names").appendChild(submit_button);
+            }
+            else {
+                for (let i = 0; i < current_player_count + 1 - num_players; i++) {
+                    const player_names = document.getElementById("player_names");
+                    player_names.removeChild(player_names.lastChild);
+                }
+                const submit_button = document.createElement('input');
+                submit_button.setAttribute("type", "submit");
+                submit_button.setAttribute("value", "Confirm Players");
+                submit_button.setAttribute("name", "submit");
+                document.getElementById("player_names").appendChild(submit_button);
+            }
+        }
+
+        function validateNames() {
+            player_count = document.getElementById("player_names").children.length - 1;
+            player_names = [];
+            for (let i = 0; i < player_count; i++) {
+                let player_name = "player_" + i;
+                player_name = document.forms["player_names"][player_name].value;
+                console.log(player_name);
+                if (player_names.includes(player_name)) {
+                    alert("Multiple players have the same name !")
+                    return false
+                }
+                player_names.push(player_name);
+
+            }
+            return true;
+        }
+    </script>
+</html>
