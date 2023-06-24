@@ -3,6 +3,7 @@ import csv
 import pandas as pd
 import sqlite3
 import random
+import numpy as np
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
@@ -127,8 +128,6 @@ def database_creation():
             tiers['D'].append(row[0])
         elif avg >= 13:
             tiers['E'].append(row[0])
-    
-    print(tiers)
 
     # create event_athletes if not in the database
     if event_athletes_exists == []:
@@ -299,67 +298,114 @@ def read_event_athletes(file: str):
             cxn.commit()
 
 '''
-This function allows for league selection for the players
+This function completes the league selection for the players
 '''
 def pick_league():
-    name = input("Enter your name: ")
+    player_count = int(input("Enter the number of players: "))
+    while not 1 <= player_count <= 6:
+        player_count = int(input("The number of players must be between 1 and 6. Please enter the number of players: "))        
 
-    print("Select 2 Tier A teams. They are as follows: ", tiers['A'])
-    tier_a1 = input("First Tier A Team: ")
-    while tier_a1 not in tiers['A']:
-        tier_a1 = input("This country is not in Tier A. Please select a different team: ")
+    player_names = []
+    for i in range(0, player_count):
+        name = input(f"Player {i+1} Name: ")
+        while name in player_names:
+            name = input(f"This player has already been added. Player {i+1} Name: ")
+        player_names.append(name)
+        players.loc[i] = {
+            'Name': name,
+            'Tier A': [],
+            'Tier B': None,
+            'Tier C': None,
+            'Tier D': None,
+            'Tier E': [],
+            'Score': 0
+        }
     
-    tier_a2 = input("Second Tier A Team: ")
-    while (tier_a2 == tier_a1) or (tier_a2 not in tiers['A']):
-        if tier_a2 == tier_a1:
-            tier_a2 = input("You have already selected this country. Please select a different team: ")
-        else:
-            tier_a2 = input("This country is not in Tier A. Please select a different team: ")
-    
-    print("Select 1 Tier B teams. They are as follows: ", tiers['B'])
-    tier_b = input("Tier B Team: ")
-    while tier_b not in tiers['B']:
-        tier_b = input("This country is not in Tier B. Please select a different team: ")
+    random.shuffle(player_names)
 
-    print("Select 1 Tier C teams. They are as follows: ", tiers['C'])
-    tier_c = input("Tier C Team: ")
-    while tier_c not in tiers['C']:
-        tier_c = input("This country is not in Tier C. Please select a different team: ")
-    
-    print("Select 1 Tier D teams. They are as follows: ", tiers['D'])
-    tier_d = input("Tier D Team: ")
-    while tier_d not in tiers['D']:
-        tier_d = input("This country is not in Tier D. Please select a different team: ")
+    tier_a_availability = tiers['A'][:]
+    tier_b_availability = tiers['B'][:]
+    tier_c_availability = tiers['C'][:]
+    tier_d_availability = tiers['D'][:]
+    tier_e_availability = tiers['E'][:]
 
-    print("Select 3 Tier E teams. They are as follows: ", tiers['E'])
-    tier_e1 = input("First Tier E Team: ")
-    while tier_e1 not in tiers['E']:
-        tier_e1 = input("This country is not in Tier E. Please select a different team: ")
+    if player_count == 3:
+        tier_a_availability = np.repeat(tier_a_availability, 2).tolist()
+    elif player_count == 4:
+        tier_a_availability = np.repeat(tier_a_availability, 3).tolist()
+    elif player_count == 5:
+        tier_a_availability = np.repeat(tier_a_availability, 3).tolist()
+        tier_b_availability = np.repeat(tier_b_availability, 2).tolist()
+        tier_c_availability = np.repeat(tier_c_availability, 2).tolist()
+        tier_e_availability = np.repeat(tier_e_availability, 2).tolist()
+    elif player_count == 6:
+        tier_a_availability = np.repeat(tier_a_availability, 4).tolist()
+        tier_b_availability = np.repeat(tier_b_availability, 2).tolist()
+        tier_c_availability = np.repeat(tier_c_availability, 2).tolist()
+        tier_d_availability = np.repeat(tier_d_availability, 2).tolist()
+        tier_e_availability = np.repeat(tier_e_availability, 2).tolist()
     
-    tier_e2 = input("Second Tier E Team: ")
-    while (tier_e2 == tier_e1) or (tier_e2 not in tiers['E']):
-        if tier_e2 == tier_e1:
-            tier_e2 = input("You have already selected this country. Please select a different team: ")
-        else:
-            tier_e2 = input("This country is not in Tier E. Please select a different team: ")
+    print(f"Starting Draft Selection with Tier A Teams.\nTier A teams are as follows {tiers['A']}")
+    for a_count in range(0, 2):
+        player_names.reverse()
+        for i in range(0, len(player_names)):
+            tier_a = input(f"{player_names[i]}, select your #{a_count+1} Tier A team: ")
+            player_index = players.index[players['Name'] == player_names[i]][0]
+            player_tier_a = players.at[player_index, 'Tier A']
+            while (tier_a not in tier_a_availability) or (tier_a in player_tier_a):
+                if tier_a in player_tier_a:
+                    tier_a = input(f"The country you entered is already in your league. Select a different team: ")
+                else:
+                    tier_a = input(f"The country you entered is not in Tier A or is unavailable for selection. Select a different team: ")
+            tier_a_availability.remove(tier_a)
+            player_tier_a.append(tier_a)
     
-    tier_e3 = input("Third Tier E Team: ")
-    while (tier_e3 == tier_e1) or (tier_e3 == tier_e2) or (tier_e3 not in tiers['E']):
-        if tier_e3 not in tiers['E']:
-            tier_e3 = input("This country is not in Tier E. Please select a different team: ")
-        else:
-            tier_e3 = input("You have already selected this country. Please select a different team: ")
+    player_names.reverse()
+    print(f"Draft Selection for Tier B Teams.\nTier B teams are as follows {tiers['B']}")
+    for i in range(0, len(player_names)):
+        tier_b = input(f"{player_names[i]}, select your first Tier B team: ")
+        while tier_b not in tier_b_availability:
+            tier_b = input(f"The country you entered is not in Tier B or is unavailable for selection. Select a different team: ")
+        tier_b_availability.remove(tier_b)
+        player_index = players.index[players['Name'] == player_names[i]][0]
+        players.at[player_index, 'Tier B'] = tier_b
+
+    player_names.reverse()
+    print(f"Draft Selection for Tier C Teams.\nTier C teams are as follows {tiers['C']}")
+    for i in range(0, len(player_names)):
+        tier_c = input(f"{player_names[i]}, select your first Tier C team: ")
+        while tier_c not in tier_c_availability:
+            tier_c = input(f"The country you entered is not in Tier C or is unavailable for selection. Select a different team: ")
+        tier_c_availability.remove(tier_c)
+        player_index = players.index[players['Name'] == player_names[i]][0]
+        players.at[player_index, 'Tier C'] = tier_c
+
     
-    players.loc[len(players)] = {
-        'Name': name,
-        'Tier A': [tier_a1, tier_a2],
-        'Tier B': tier_b,
-        'Tier C': tier_c,
-        'Tier D': tier_d,
-        'Tier E': [tier_e1, tier_e2, tier_e3],
-        'Score': 0
-    }
-    print(players.to_string())
+    player_names.reverse()
+    print(f"Draft Selection for Tier D Teams.\nTier D teams are as follows {tiers['D']}")
+    for i in range(0, len(player_names)):
+        tier_d = input(f"{player_names[i]}, select your first Tier D team: ")
+        while tier_d not in tier_d_availability:
+            tier_d = input(f"The country you entered is not in Tier D or is unavailable for selection. Select a different team: ")
+        tier_d_availability.remove(tier_d)
+        player_index = players.index[players['Name'] == player_names[i]][0]
+        players.at[player_index, 'Tier D'] = tier_d
+
+
+    print(f"Draft Selection for Tier E Teams.\nTier E teams are as follows {tiers['E']}")
+    for e_count in range(0, 3):
+        player_names.reverse()
+        for i in range(0, len(player_names)):
+            tier_e = input(f"{player_names[i]}, select your #{e_count+1} Tier E team: ")
+            player_index = players.index[players['Name'] == player_names[i]][0]
+            player_tier_e = players.at[player_index, 'Tier E']
+            while (tier_e not in tier_e_availability) or (tier_e in player_tier_e):
+                if tier_e in player_tier_e:
+                    tier_e = input(f"The country you entered is already in your league. Select a different team: ")
+                else:
+                    tier_e = input(f"The country you entered is not in Tier E or is unavailable for selection. Select a different team: ")
+            tier_e_availability.remove(tier_e)
+            player_tier_e.append(tier_e)
 
 '''
 This function performs the majority of the game play operations following league
@@ -481,7 +527,8 @@ def update_player_scores(medalists: list):
         # increases score by 1 if the bronze medalist is in their league
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
-
+    
+    players.sort_values(by='Score', ascending=False, inplace=True)
     print(players)
 
 '''

@@ -57,7 +57,7 @@ To run the program, in the project directory in the terminal run the following c
             Singles Men,Gold,Spain,Great Britain,Great Britain
          It means that the for the Men's Singles, the Gold Medal was won by Spain once and Great Britain twice from 2008 to 2016.
    * event_athletes stores the participants for the event in the game.
-      * There are 8 participants per event that were determined by taking the actual top 8 finishers of each event at the 2020 Tokyo Olympics for simplicity. Events with less than 8 participants had less than 8 participants competing (note: this was commonly seen in Team events and had 6 participants).
+      * There are 8 participants per event that were determined by taking the actual top 8 finishers of each event at the 2020 Tokyo Olympics for simplicity. Events with less than 8 participants had less than 8 participants competing (note: this was commonly seen in Team events and had 6 participants or in event finals with less than 8 participants).
       * This data comes from the csv event list. Each row is formatted as follows: <Event_Name>, <Country_Name>, <Country_Name>, <Country_Name>, ..., <Country_Name>
 2) A dictionary that stores which countries are in which tiers
 3) A list that stores events that will be played in the game
