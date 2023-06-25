@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, redirect, url_for, request
 from flask_cachecontrol import dont_cache
 import csv
 import pandas as pd
@@ -8,38 +8,55 @@ import numpy as np
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
-cxn = sqlite3.connect('olympic_stats.db')
+cxn = sqlite3.connect('olympic_stats.db', check_same_thread=False)
 unplayed_events = []
 previously_played_events = []
 dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling'] # these events always give 2 bronze medals
 game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
+draft_order = []
+current_draft_pick = 0
+draft_round = [1, 'A']
 
 app = Flask(__name__)
 
 @app.route('/')
 @dont_cache()
 def home_page():
-    global players, game_medal_table
-    if len(players.index) > 0:
-        players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
-    if len(game_medal_table) > 0:
-        game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
-        database_creation()
+    if (len(players.index) > 0) or (len(game_medal_table) > 0):
+        reset_game()
     return render_template('home.html')
 
 @app.route('/draft', methods = ["POST"])
-def draft():
-    player_names = []
-    print(tiers)
-    if (request.method == "POST") and (request.form["submit"] == "Confirm Players"):
-        players_form = request.form.to_dict(flat=False)
-        del players_form["submit"]
-        for player in players_form:
-            name = players_form[player][0]
-            if name == 'Confirm Players':
-                continue
-            player_names.append(name)
-            players.loc[len(players.index)] = {
+def draft_page():
+    global draft_order, current_draft_pick, draft_round
+    if (request.method == "POST") and (request.form.get("submit") is not None) and (request.form["submit"] == "Confirm Players"):
+        set_players(request.form.to_dict(flat=False))
+
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers['A'])   
+    
+    if draft_team(list(request.form.keys())[0], draft_round[1]):
+        print(players)
+        if draft_round[0] == 9:
+            return redirect(url_for('play_game'))
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]])
+
+    return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], error="You have already selected this country. Please select a different country")
+
+@app.route('/play-game')
+def play_game():
+    
+    return render_template('game.html')
+
+def set_players(players_dict: dict):
+    global draft_order, current_draft_pick, draft_round
+    draft_order = []
+    draft_round = [1, 'A']
+    for player in players_dict:
+        name = players_dict[player][0]
+        if name == 'Confirm Players':
+            continue
+        draft_order.append(name)
+        players.loc[len(players.index)] = {
                 'Name': name,
                 'Tier A': [],
                 'Tier B': None,
@@ -47,14 +64,52 @@ def draft():
                 'Tier D': None,
                 'Tier E': [],
                 'Score': 0
-            }
-        
+        }
+    current_draft_pick = 0
+    random.shuffle(draft_order)
+
+    player_count = len(draft_order)
     
-    print(players)
+    if player_count == 3:
+        tiers['A'] = np.repeat(tiers['A'][:], 2).tolist()
+    elif player_count == 4:
+        tiers['A'] = np.repeat(tiers['A'][:], 3).tolist()
+    elif player_count == 5:
+        tiers['A'] = np.repeat(tiers['A'][:], 3).tolist()
+        tiers['B'] = np.repeat(tiers['B'][:], 2).tolist()
+        tiers['C'] = np.repeat(tiers['C'][:], 2).tolist()
+        tiers['E'] = np.repeat(tiers['E'][:], 2).tolist()
+    elif player_count == 6:
+        tiers['A'] = np.repeat(tiers['A'][:], 4).tolist()
+        tiers['B'] = np.repeat(tiers['B'][:], 2).tolist()
+        tiers['C'] = np.repeat(tiers['C'][:], 2).tolist()
+        tiers['D'] = np.repeat(tiers['D'][:], 2).tolist()
+        tiers['E'] = np.repeat(tiers['E'][:], 2).tolist()
 
-    return render_template('draft.html')
+def draft_team(drafted_team: str, tier: str):
+    global current_draft_pick, draft_order, draft_round
+    player_index = players.index[players['Name'] == draft_order[current_draft_pick]][0]
 
-
+    if (tier == 'A' or tier == 'E') and (drafted_team in players.at[player_index, 'Tier ' + tier]):
+        return False
+    if tier == 'A' or tier == 'E':
+        players.at[player_index, 'Tier ' + tier].append(drafted_team)
+    else:
+        players.at[player_index, 'Tier ' + tier] = drafted_team
+    tiers[tier].remove(drafted_team)
+    current_draft_pick = (current_draft_pick + 1) % len(draft_order)
+    if current_draft_pick == 0:
+        draft_order.reverse()
+        draft_round[0] += 1
+        if draft_round[0] == 3:
+            draft_round[1] = 'B'
+        if draft_round[0] == 4:
+            draft_round[1] = 'C'
+        if draft_round[0] == 5:
+            draft_round[1] = 'D'
+        if draft_round[0] == 6:
+            draft_round[1] = 'E'
+    return True
 
 '''
 This function completes the following preprocessing steps required for the game
@@ -571,6 +626,15 @@ def update_player_scores(medalists: list):
     
     players.sort_values(by='Score', ascending=False, inplace=True)
     print(players)
+
+def reset_game():
+    global players, game_medal_table, cxn, unplayed_events, previously_played_events, tiers
+    players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
+    game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
+    unplayed_events = []
+    previously_played_events = []
+    tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
+    database_creation()
 
 '''
 This function goes through required operations to end the game

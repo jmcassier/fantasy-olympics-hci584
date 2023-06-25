@@ -5,5 +5,25 @@
     </head>
     <body>
         <h1 class="title"> DRAFT </h1>
+        <div>
+            select country {{ player }}
+        </div>
+        <div>{{ error }}</div>
+        <form action="/draft" id="league_selection" method="POST" />
     </body>
+
+    <script type="text/javascript">
+        let countries = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
+        console.log(countries);
+        countries = Array.from(new Set(countries));
+        console.log(countries);
+        for (country of countries) {
+            const country_btn = document.createElement('button');
+            country_btn.setAttribute('type', 'submit');
+            country_btn.setAttribute('name', country);
+            country_btn.setAttribute('value', country);
+            country_btn.appendChild(document.createTextNode(country));
+            document.getElementById("league_selection").appendChild(country_btn);
+        }
+    </script>
 </html>
