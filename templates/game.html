@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/home.css"
+    </head>
+    <body>
+        <h1 class="title"> GAME PLAY </h1>
+    </body>
+    <script type="text/javascript">
+        let medalists = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
+        console.log(medalists);
+        
+        for (medalists of countries) {
+            const country_btn = document.createElement('button');
+            country_btn.setAttribute('type', 'submit');
+            country_btn.setAttribute('name', country);
+            country_btn.setAttribute('value', country);
+            country_btn.appendChild(document.createTextNode(country));
+            document.getElementById("league_selection").appendChild(country_btn);
+        }
+    </script>
+</html>
