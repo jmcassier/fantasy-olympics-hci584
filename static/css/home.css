@@ -1,3 +1,107 @@
 .title {
-    text-align: center;
+  text-align: center;
+  color: #002F6C;
+  margin-top: 24px;
+  margin-bottom: 0;
+  font-size: 52px;
+}
+
+h1, h2, h3, p, div {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.rings {
+  width: 450px;
+  height: auto;
+  display: block;
+  margin: 0 auto 50px;
+}
+
+.mainContainer {
+  line-height: 1.5;
+  text-align: left;
+  width: calc(100% - 104px);
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.mainContainer > div > h3 {
+  font-weight: 300;
+  text-decoration: underline;
+}
+
+.playerButton {
+  color: #002F6C;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  border: 2px solid #002F6C;
+}
+
+.playerButton:hover,
+.playerButton:focus {
+  cursor: pointer;
+  background-color: #002f6c2e;
+  outline: none;
+}
+
+.playerButtonClicked {
+  color: white;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: #002F6C;
+  border: 2px solid #002F6C;
+}
+
+.submitButton {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: #329932;
+}
+
+.submitButton:hover,
+.submitButton:focus {
+  cursor: pointer;
+  background-color: #008000;
+  outline: none;
+}
+
+.nameInput {
+  display: flex;
+  flex-direction: column;
+  max-width: 180px;
+  row-gap: 4px;
+  margin: 10px 6px;
+}
+
+.nameInput > input {
+  height: 30px;
+  font-size: 16px;
+  border-radius: 12px;
+  border-style: solid;
+  padding: 10px;
+}
+
+.nameInput > input:hover,
+.nameInput > input:focus-visible {
+    border: solid #002F6C;
+    outline: none;
+  }
+
+.playerInputContainer {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 10px;
 }

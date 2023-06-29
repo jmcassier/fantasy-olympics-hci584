@@ -29,9 +29,10 @@ def home_page():
 @app.route('/draft', methods = ["POST"])
 def draft_page():
     global draft_order, current_draft_pick, draft_round
+    print(request.form)
     if (request.method == "POST") and (request.form.get("submit") is not None) and (request.form["submit"] == "Confirm Players"):
-        set_players(request.form.to_dict(flat=False))
-
+        if len(players) == 0:
+            set_players(request.form.to_dict(flat=False))
         return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers['A'])   
     
     if draft_team(list(request.form.keys())[0], draft_round[1]):
@@ -44,7 +45,7 @@ def draft_page():
 
 @app.route('/play-game')
 def play_game():
-    
+
     return render_template('game.html')
 
 def set_players(players_dict: dict):

@@ -1,0 +1,12 @@
+.title {
+    text-align: center;
+    color: #002F6C;
+    margin-top: 24px;
+    margin-bottom: 0;
+    font-size: 52px;
+  }
+  
+  h1, h2, h3, p, div {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
