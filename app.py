@@ -29,23 +29,21 @@ def home_page():
 @app.route('/draft', methods = ["POST"])
 def draft_page():
     global draft_order, current_draft_pick, draft_round
-    print(request.form)
     if (request.method == "POST") and (request.form.get("submit") is not None) and (request.form["submit"] == "Confirm Players"):
         if len(players) == 0:
             set_players(request.form.to_dict(flat=False))
-        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers['A'])   
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers['A'], round=draft_round[0])   
     
     if draft_team(list(request.form.keys())[0], draft_round[1]):
         print(players)
         if draft_round[0] == 9:
             return redirect(url_for('play_game'))
-        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]])
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], round=draft_round[0])
 
-    return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], error="You have already selected this country. Please select a different country")
+    return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], round=draft_round[0], error="You have already selected this country. Please select a different country")
 
 @app.route('/play-game')
 def play_game():
-
     return render_template('game.html')
 
 def set_players(players_dict: dict):

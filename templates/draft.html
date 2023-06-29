@@ -8,11 +8,8 @@
         />
     </head>
     <body>
-        <h1 class="title"> DRAFT </h1>
+        <h1 class="title"> Draft: Round {{ round }} </h1>
         <div class="mainContainer">
-            <div>
-                Round {{ player }}
-            </div>
             <div>
                 Pick your team, {{ player }}
             </div>
@@ -25,9 +22,7 @@
         let countries = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
         counts = {};
         countries.forEach(function(country) { counts[country] = (counts[country] || 0) + 1; });
-        console.log(counts);
         countries = Array.from(new Set(countries));
-        console.log(countries);
         for (country of countries) {
             const countryButton = document.createElement('button');
             countryButton.setAttribute('type', 'submit');
