@@ -10,9 +10,9 @@
     <body>
         <h1 class="title"> Draft: Round {{ round }} </h1>
         <div class="mainContainer">
-            <div>
+            <h2>
                 Pick your team, {{ player }}
-            </div>
+            </h2>
             <div>{{ error }}</div>
             <form class="form" action="/draft" id="league_selection" method="POST" />
         </div>
@@ -20,27 +20,60 @@
 
     <script type="text/javascript">
         let countries = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
+        let codes = '{{ country_codes }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
         counts = {};
         countries.forEach(function(country) { counts[country] = (counts[country] || 0) + 1; });
         countries = Array.from(new Set(countries));
-        for (country of countries) {
-            const countryButton = document.createElement('button');
-            countryButton.setAttribute('type', 'submit');
-            countryButton.setAttribute('name', country);
-            countryButton.setAttribute('value', country);
-            countryButton.setAttribute('class', 'countryButton');
+        for (let i = 0; i < countries.length; i++) {
+            const country = countries[i];
+            const code = codes[i];
+            const countrySelect = document.createElement('div');
+            countrySelect.setAttribute('class', 'countrySelect');
             const img = document.createElement('span');
-            img.setAttribute('class', 'flag fi-us');
-            countryButton.appendChild(img);
+            img.setAttribute('class', 'flag fi-'+code);
+            countrySelect.appendChild(img);
             const text = document.createElement('div');
             const countryName = document.createElement('div');
             countryName.appendChild(document.createTextNode(country));
             const availability = document.createElement('div');
-            availability.appendChild(document.createTextNode('Available ' + counts[country] + ' times'));
+            if (counts[country] == 1) {
+                availability.appendChild(document.createTextNode('Available 1 time'));
+            }
+            else {
+                availability.appendChild(document.createTextNode('Available ' + counts[country] + ' times'));
+            }
             text.appendChild(countryName);
             text.appendChild(availability);
-            countryButton.appendChild(text);
-            document.getElementById("league_selection").appendChild(countryButton);
+            countrySelect.appendChild(text);
+            const countryButton = document.createElement('button');
+            countryButton.setAttribute('type', 'submit');
+            countryButton.setAttribute('name', country);
+            countryButton.setAttribute('class', 'countryButton');
+            countryButton.appendChild(document.createTextNode('Select'));
+            countrySelect.appendChild(countryButton);
+            document.getElementById("league_selection").appendChild(countrySelect);
+            // const countryButton = document.createElement('button');
+            // countryButton.setAttribute('type', 'submit');
+            // countryButton.setAttribute('name', country);
+            // countryButton.setAttribute('value', country);
+            // countryButton.setAttribute('class', 'countryButton');
+            // const img = document.createElement('span');
+            // img.setAttribute('class', 'flag fi-'+code);
+            // countryButton.appendChild(img);
+            // const text = document.createElement('div');
+            // const countryName = document.createElement('div');
+            // countryName.appendChild(document.createTextNode(country));
+            // const availability = document.createElement('div');
+            // if (counts[country] == 1) {
+            //     availability.appendChild(document.createTextNode('Available 1 time'));
+            // }
+            // else {
+            //     availability.appendChild(document.createTextNode('Available ' + counts[country] + ' times'));
+            // }
+            // text.appendChild(countryName);
+            // text.appendChild(availability);
+            // countryButton.appendChild(text);
+            // document.getElementById("league_selection").appendChild(countryButton);
         }
     </script>
 </html>

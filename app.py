@@ -16,6 +16,8 @@ game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze'
 draft_order = []
 current_draft_pick = 0
 draft_round = [1, 'A']
+country_codes = {}
+error_msg = None
 
 app = Flask(__name__)
 
@@ -26,21 +28,37 @@ def home_page():
         reset_game()
     return render_template('home.html')
 
-@app.route('/draft', methods = ["POST"])
+@app.route('/draft', methods = ["POST", "GET"])
 def draft_page():
-    global draft_order, current_draft_pick, draft_round
+    global draft_order, current_draft_pick, draft_round, error_msg
     if (request.method == "POST") and (request.form.get("submit") is not None) and (request.form["submit"] == "Confirm Players"):
         if len(players) == 0:
             set_players(request.form.to_dict(flat=False))
-        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers['A'], round=draft_round[0])   
-    
-    if draft_team(list(request.form.keys())[0], draft_round[1]):
-        print(players)
-        if draft_round[0] == 9:
-            return redirect(url_for('play_game'))
-        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], round=draft_round[0])
+        error_msg = None
+        return redirect(url_for('draft_page'), 302)
+   
+    if request.method == "POST":
+        if draft_team(list(request.form.keys())[0], draft_round[1]):
+            print(players)
+            if draft_round[0] == 9:
+                return redirect(url_for('play_game'))
+            error_msg = None
+            return redirect(url_for('draft_page'), code=302)
 
-    return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], round=draft_round[0], error="You have already selected this country. Please select a different country")
+        error_msg = "You have already selected this country. Please select a different country"
+        return redirect(url_for('draft_page'), code=302)
+    
+    else:
+        avail_country_codes = []
+        for country in tiers[draft_round[1]]:
+            if country_codes[country] not in avail_country_codes:
+                avail_country_codes.append(country_codes[country])
+
+        if error_msg is not None:
+            return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], country_codes=avail_country_codes, round=draft_round[0], error=error_msg)
+        
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], country_codes=avail_country_codes, round=draft_round[0])
+
 
 @app.route('/play-game')
 def play_game():
@@ -257,6 +275,8 @@ def database_creation():
     global previously_played_events
     previously_played_events = list(map(lambda x: x[0], cursor.description))
 
+    read_country_codes('./medal-data/country-codes.csv')
+
 '''
 This function parses through a medal table and places the data into
 score_by_olympic_cycle. The value in each score represents the score a country
@@ -391,6 +411,12 @@ def read_event_athletes(file: str):
                 (event[0], event[1], event[2], event[3], event[4], event[5], event[6], event[7], event[8])
             )
             cxn.commit()
+
+def read_country_codes(file: str):
+    with open(file, newline = '') as codes:
+        reader = csv.reader(codes, quotechar = '|')
+        for code in reader:
+            country_codes[code[0]] = code[1]
 
 '''
 This function completes the league selection for the players
@@ -627,12 +653,14 @@ def update_player_scores(medalists: list):
     print(players)
 
 def reset_game():
-    global players, game_medal_table, cxn, unplayed_events, previously_played_events, tiers
+    global players, game_medal_table, cxn, unplayed_events, previously_played_events, tiers, country_codes, error_msg
     players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
     game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
     unplayed_events = []
     previously_played_events = []
     tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
+    country_codes = {}
+    error_msg = None
     database_creation()
 
 '''
