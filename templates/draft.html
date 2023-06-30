@@ -11,9 +11,9 @@
         <h1 class="title"> Draft: Round {{ round }} </h1>
         <div class="mainContainer">
             <h2>
-                Pick your team, {{ player }}
+                {{ player }}, select a team
             </h2>
-            <div>{{ error }}</div>
+            <div class="errorMsg">{{ error }}</div>
             <form class="form" action="/draft" id="league_selection" method="POST" />
         </div>
     </body>

@@ -33,34 +33,34 @@ h1, h2, h3, p, div {
 }
 
 .countryButton {
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 9px 15px;
-    border-radius: 12px;
-    font-size: 16px;
-    background-color: #002F6C;
-    width: 100%;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  background-color: #002F6C;
+  width: 100%;
 }
 
 .countryButton:hover {
-    cursor: pointer;
-    background-color: #001939;
+  cursor: pointer;
+  background-color: #001939;
 }
 
 .countrySelect {
-    display: flex;
-    flex-direction: column;
-    padding: 20px 20px;
-    border: none;
-    border-radius: 16px;
-    align-items: center;
-    row-gap: 18px;
-    box-shadow: 10px 10px 10px #d7d7d7;
-    background-color: #F8F8FF;
-    text-align: center;
-    width: 150px;
-  }
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 16px;
+  align-items: center;
+  row-gap: 18px;
+  box-shadow: 10px 10px 10px #d7d7d7;
+  background-color: #F8F8FF;
+  text-align: center;
+  width: 150px;
+}
 
 .form {
   display: flex;
@@ -68,4 +68,9 @@ h1, h2, h3, p, div {
   column-gap: 48px;
   row-gap: 48px;
   justify-content: center;
+  margin-top: 28px;
+}
+
+.errorMsg {
+  color: #960018;
 }

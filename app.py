@@ -43,10 +43,10 @@ def draft_page():
             if draft_round[0] == 9:
                 return redirect(url_for('play_game'))
             error_msg = None
-            return redirect(url_for('draft_page'), code=302)
+            return redirect(url_for('draft_page'), 302)
 
         error_msg = "You have already selected this country. Please select a different country"
-        return redirect(url_for('draft_page'), code=302)
+        return redirect(url_for('draft_page'), 302)
     
     else:
         avail_country_codes = []
