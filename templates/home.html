@@ -57,7 +57,8 @@
                     6 Players
                 </button>
                 <form action="/draft" id="player-names" method="POST" onsubmit="return validateNames();">
-                    <div id="player-input-container" class="playerInputContainer"/>
+                    <div id="player-input-container" class="playerInputContainer"></div>
+                    <input id="submit-button" type="submit" name="submit" value="Confirm Players" class="submitButton" hidden/>
                 </form>
             </div>
         </div>
@@ -78,9 +79,6 @@
                 }
             }
             if (currPlayerCount < numPlayers) {
-                if (currPlayerCount != 0) {
-                    playerNames.removeChild(playerNames.lastChild);
-                }
                 for (let i = 0; i < numPlayers - currPlayerCount; i++) {
                     const div = document.createElement('div');
                     div.setAttribute("class", "nameInput");
@@ -98,18 +96,12 @@
                 }
             }
             else {
-                playerNames.removeChild(playerNames.lastChild);
                 for (let i = 0; i < currPlayerCount - numPlayers; i++) {
                     const playerNames = document.getElementById("player-input-container");
                     playerNames.removeChild(playerNames.lastChild);
                 }
             }
-            const submitButton = document.createElement('input');
-                submitButton.setAttribute("type", "submit");
-                submitButton.setAttribute("name", "submit");
-                submitButton.setAttribute("value", "Confirm Players");
-                submitButton.setAttribute("class", "submitButton");
-                document.getElementById("player-names").appendChild(submitButton);
+            document.getElementById("submit-button").removeAttribute("hidden");
         }
 
         function validateNames() {

@@ -60,9 +60,17 @@ def draft_page():
         return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], country_codes=avail_country_codes, round=draft_round[0])
 
 
-@app.route('/play-game')
+@app.route('/play-game', methods = ["GET", "POST"])
 def play_game():
-    return render_template('game.html')
+    if len(unplayed_events) == 0:
+        print(players)
+        return render_template('game.html', game_over="game over")
+    
+    game_play()
+    scoreboard_data = []
+    for player in players.iterrows():
+        scoreboard_data.append(players.loc[player[0], :].values.flatten().tolist())
+    return render_template('game.html', scoreboard=scoreboard_data)
 
 def set_players(players_dict: dict):
     global draft_order, current_draft_pick, draft_round
@@ -533,76 +541,77 @@ This function performs the majority of the game play operations following league
 selection.
 '''
 def game_play():
-    # play as long as there are event to play
-    while len(unplayed_events) > 0:
-        curr_event = random.choice(unplayed_events)
-        unplayed_events.remove(curr_event)
-        athletes = cxn.execute('''
-            SELECT *
-            FROM event_athletes
-            WHERE Event = ?
-            ''',
-            (curr_event,)
-        ).fetchone()
+# play as long as there are event to play
+# while len(unplayed_events) > 0:
+    print("gameplay")
+    curr_event = random.choice(unplayed_events)
+    unplayed_events.remove(curr_event)
+    athletes = cxn.execute('''
+        SELECT *
+        FROM event_athletes
+        WHERE Event = ?
+        ''',
+        (curr_event,)
+    ).fetchone()
 
-        # removes blank entries if there are only 6 participants
-        if athletes[7] == '' and athletes[8] == '':
-            athletes = list(athletes[1:7])
-        else:
-            athletes = list(athletes[1:])
+    # removes blank entries if there are only 6 participants
+    if athletes[7] == '' and athletes[8] == '':
+        athletes = list(athletes[1:7])
+    else:
+        athletes = list(athletes[1:])
 
-        
-        previously_played = True if curr_event in previously_played_events else False
-        event_medalists = []
-        weighted_athletes = []
-        num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
+    
+    previously_played = True if curr_event in previously_played_events else False
+    event_medalists = []
+    weighted_athletes = []
+    num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
 
-        # use a weighted random selection if previously played.
-        if previously_played:
-            # get the weights for each country
-            for athlete in athletes:
-                weight = cxn.execute(f'''
-                    SELECT `{curr_event}`
-                    FROM scores_by_event
-                    WHERE country = ?
-                    ''',
-                    (athlete,)
-                ).fetchone()
-                if weight is not None:
-                    weighted_athletes.append(weight[0]+1) # add one to offset the default being 1
-                else:
-                    weighted_athletes.append(1)
-
-        # determine the medalists
-        for index in range(0, num_medals):
-            medalist = random.choices(athletes, weights = weighted_athletes)[0] if previously_played else random.choice(athletes)
-            event_medalists.append(medalist)
-            # remove weight from weights if previously played
-            if previously_played:
-                medalist_index = athletes.index(medalist)
-                del weighted_athletes[medalist_index]
-            athletes.remove(medalist) # remove medalist from participants to avoid duplicate winners
-            
-            # update medal table
-            if index == 0:
-                update_game_medals(medalist, 'Gold')
-            elif index == 1:
-                update_game_medals(medalist, 'Silver')
+    # use a weighted random selection if previously played.
+    if previously_played:
+        # get the weights for each country
+        for athlete in athletes:
+            weight = cxn.execute(f'''
+                SELECT `{curr_event}`
+                FROM scores_by_event
+                WHERE country = ?
+                ''',
+                (athlete,)
+            ).fetchone()
+            if weight is not None:
+                weighted_athletes.append(weight[0]+1) # add one to offset the default being 1
             else:
-                update_game_medals(medalist)
+                weighted_athletes.append(1)
+
+    # determine the medalists
+    for index in range(0, num_medals):
+        medalist = random.choices(athletes, weights = weighted_athletes)[0] if previously_played else random.choice(athletes)
+        event_medalists.append(medalist)
+        # remove weight from weights if previously played
+        if previously_played:
+            medalist_index = athletes.index(medalist)
+            del weighted_athletes[medalist_index]
+        athletes.remove(medalist) # remove medalist from participants to avoid duplicate winners
         
-        print(curr_event)
-        print(f'gold medalist: {event_medalists[0]}' )
-        print(f'silver medalist: {event_medalists[1]}' )
-        if num_medals == 4:
-            print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+        # update medal table
+        if index == 0:
+            update_game_medals(medalist, 'Gold')
+        elif index == 1:
+            update_game_medals(medalist, 'Silver')
         else:
-            print(f'bronze medalist: {event_medalists[2]}' )
-        
-        # update scoreboard
-        update_player_scores(event_medalists)
-        
-        input('continue? ')   
+            update_game_medals(medalist)
+    
+    print(curr_event)
+    print(f'gold medalist: {event_medalists[0]}' )
+    print(f'silver medalist: {event_medalists[1]}' )
+    if num_medals == 4:
+        print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+    else:
+        print(f'bronze medalist: {event_medalists[2]}' )
+    
+    # update scoreboard
+    update_player_scores(event_medalists)
+    
+    # input('continue? ')   
 
 '''
 This function updates the medal table for the game throughout the game

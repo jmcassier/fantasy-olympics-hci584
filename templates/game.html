@@ -5,18 +5,37 @@
     </head>
     <body>
         <h1 class="title"> GAME PLAY </h1>
+        {{abc}}
+        {{game_over}}
+        {% for row in scoreboard %}
+            <div>
+                {{row[0]}}
+            </div>
+            <div>
+                {{row[1][0]}}
+                {{row[1][1]}}
+            </div>
+            <div>
+                {{row[2]}}
+            </div>
+            <div>
+                {{row[3]}}
+            </div>
+            <div>
+                {{row[4]}}
+            </div>
+            <div>
+                {{row[5][0]}}
+                {{row[5][1]}}
+                {{row[5][2]}}
+            </div>
+            <div>
+                {{row[6]}}
+            </div>
+        {% endfor %}
+
+        <form action="/play-game" id="game_play" method="POST">
+            <button type="submit">CONTINUE</button>
+        </form>
     </body>
-    <script type="text/javascript">
-        let medalists = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
-        console.log(medalists);
-        
-        for (medalists of countries) {
-            const country_btn = document.createElement('button');
-            country_btn.setAttribute('type', 'submit');
-            country_btn.setAttribute('name', country);
-            country_btn.setAttribute('value', country);
-            country_btn.appendChild(document.createTextNode(country));
-            document.getElementById("league_selection").appendChild(country_btn);
-        }
-    </script>
 </html>
