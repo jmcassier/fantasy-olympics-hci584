@@ -1,4 +1,5 @@
-# from flask import Flask
+from flask import Flask, render_template, redirect, url_for, request
+from flask_cachecontrol import dont_cache
 import csv
 import pandas as pd
 import sqlite3
@@ -7,13 +8,133 @@ import numpy as np
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
-cxn = sqlite3.connect('olympic_stats.db')
+cxn = sqlite3.connect('olympic_stats.db', check_same_thread=False)
 unplayed_events = []
 previously_played_events = []
 dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling'] # these events always give 2 bronze medals
 game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
+draft_order = []
+current_draft_pick = 0
+draft_round = [1, 'A']
+country_codes = {}
+error_msg = None
 
-# app = Flask(__name__)
+app = Flask(__name__)
+
+@app.route('/')
+@dont_cache()
+def home_page():
+    if (len(players.index) > 0) or (len(game_medal_table) > 0):
+        reset_game()
+    return render_template('home.html')
+
+@app.route('/draft', methods = ["POST", "GET"])
+def draft_page():
+    global draft_order, current_draft_pick, draft_round, error_msg
+    if (request.method == "POST") and (request.form.get("submit") is not None) and (request.form["submit"] == "Confirm Players"):
+        if len(players) == 0:
+            set_players(request.form.to_dict(flat=False))
+        error_msg = None
+        return redirect(url_for('draft_page'), 302)
+   
+    if request.method == "POST":
+        if draft_team(list(request.form.keys())[0], draft_round[1]):
+            print(players)
+            if draft_round[0] == 9:
+                return redirect(url_for('play_game'))
+            error_msg = None
+            return redirect(url_for('draft_page'), 302)
+
+        error_msg = "You have already selected this country. Please select a different country"
+        return redirect(url_for('draft_page'), 302)
+    
+    else:
+        avail_country_codes = []
+        for country in tiers[draft_round[1]]:
+            if country_codes[country] not in avail_country_codes:
+                avail_country_codes.append(country_codes[country])
+
+        if error_msg is not None:
+            return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], country_codes=avail_country_codes, round=draft_round[0], error=error_msg)
+        
+        return render_template('draft.html', player=draft_order[current_draft_pick], available_countries=tiers[draft_round[1]], country_codes=avail_country_codes, round=draft_round[0])
+
+
+@app.route('/play-game', methods = ["GET", "POST"])
+def play_game():
+    if len(unplayed_events) == 0:
+        print(players)
+        return render_template('game.html', game_over="game over")
+    
+    game_play()
+    scoreboard_data = []
+    for player in players.iterrows():
+        scoreboard_data.append(players.loc[player[0], :].values.flatten().tolist())
+    return render_template('game.html', scoreboard=scoreboard_data)
+
+def set_players(players_dict: dict):
+    global draft_order, current_draft_pick, draft_round
+    draft_order = []
+    draft_round = [1, 'A']
+    for player in players_dict:
+        name = players_dict[player][0]
+        if name == 'Confirm Players':
+            continue
+        draft_order.append(name)
+        players.loc[len(players.index)] = {
+                'Name': name,
+                'Tier A': [],
+                'Tier B': None,
+                'Tier C': None,
+                'Tier D': None,
+                'Tier E': [],
+                'Score': 0
+        }
+    current_draft_pick = 0
+    random.shuffle(draft_order)
+
+    player_count = len(draft_order)
+    
+    if player_count == 3:
+        tiers['A'] = np.repeat(tiers['A'][:], 2).tolist()
+    elif player_count == 4:
+        tiers['A'] = np.repeat(tiers['A'][:], 3).tolist()
+    elif player_count == 5:
+        tiers['A'] = np.repeat(tiers['A'][:], 3).tolist()
+        tiers['B'] = np.repeat(tiers['B'][:], 2).tolist()
+        tiers['C'] = np.repeat(tiers['C'][:], 2).tolist()
+        tiers['E'] = np.repeat(tiers['E'][:], 2).tolist()
+    elif player_count == 6:
+        tiers['A'] = np.repeat(tiers['A'][:], 4).tolist()
+        tiers['B'] = np.repeat(tiers['B'][:], 2).tolist()
+        tiers['C'] = np.repeat(tiers['C'][:], 2).tolist()
+        tiers['D'] = np.repeat(tiers['D'][:], 2).tolist()
+        tiers['E'] = np.repeat(tiers['E'][:], 2).tolist()
+
+def draft_team(drafted_team: str, tier: str):
+    global current_draft_pick, draft_order, draft_round
+    player_index = players.index[players['Name'] == draft_order[current_draft_pick]][0]
+
+    if (tier == 'A' or tier == 'E') and (drafted_team in players.at[player_index, 'Tier ' + tier]):
+        return False
+    if tier == 'A' or tier == 'E':
+        players.at[player_index, 'Tier ' + tier].append(drafted_team)
+    else:
+        players.at[player_index, 'Tier ' + tier] = drafted_team
+    tiers[tier].remove(drafted_team)
+    current_draft_pick = (current_draft_pick + 1) % len(draft_order)
+    if current_draft_pick == 0:
+        draft_order.reverse()
+        draft_round[0] += 1
+        if draft_round[0] == 3:
+            draft_round[1] = 'B'
+        if draft_round[0] == 4:
+            draft_round[1] = 'C'
+        if draft_round[0] == 5:
+            draft_round[1] = 'D'
+        if draft_round[0] == 6:
+            draft_round[1] = 'E'
+    return True
 
 '''
 This function completes the following preprocessing steps required for the game
@@ -162,6 +283,8 @@ def database_creation():
     global previously_played_events
     previously_played_events = list(map(lambda x: x[0], cursor.description))
 
+    read_country_codes('./medal-data/country-codes.csv')
+
 '''
 This function parses through a medal table and places the data into
 score_by_olympic_cycle. The value in each score represents the score a country
@@ -297,6 +420,12 @@ def read_event_athletes(file: str):
             )
             cxn.commit()
 
+def read_country_codes(file: str):
+    with open(file, newline = '') as codes:
+        reader = csv.reader(codes, quotechar = '|')
+        for code in reader:
+            country_codes[code[0]] = code[1]
+
 '''
 This function completes the league selection for the players
 '''
@@ -412,76 +541,77 @@ This function performs the majority of the game play operations following league
 selection.
 '''
 def game_play():
-    # play as long as there are event to play
-    while len(unplayed_events) > 0:
-        curr_event = random.choice(unplayed_events)
-        unplayed_events.remove(curr_event)
-        athletes = cxn.execute('''
-            SELECT *
-            FROM event_athletes
-            WHERE Event = ?
-            ''',
-            (curr_event,)
-        ).fetchone()
+# play as long as there are event to play
+# while len(unplayed_events) > 0:
+    print("gameplay")
+    curr_event = random.choice(unplayed_events)
+    unplayed_events.remove(curr_event)
+    athletes = cxn.execute('''
+        SELECT *
+        FROM event_athletes
+        WHERE Event = ?
+        ''',
+        (curr_event,)
+    ).fetchone()
 
-        # removes blank entries if there are only 6 participants
-        if athletes[7] == '' and athletes[8] == '':
-            athletes = list(athletes[1:7])
-        else:
-            athletes = list(athletes[1:])
+    # removes blank entries if there are only 6 participants
+    if athletes[7] == '' and athletes[8] == '':
+        athletes = list(athletes[1:7])
+    else:
+        athletes = list(athletes[1:])
 
-        
-        previously_played = True if curr_event in previously_played_events else False
-        event_medalists = []
-        weighted_athletes = []
-        num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
+    
+    previously_played = True if curr_event in previously_played_events else False
+    event_medalists = []
+    weighted_athletes = []
+    num_medals = 4 if curr_event.split(' ')[0] in dual_bronze else 3
 
-        # use a weighted random selection if previously played.
-        if previously_played:
-            # get the weights for each country
-            for athlete in athletes:
-                weight = cxn.execute(f'''
-                    SELECT `{curr_event}`
-                    FROM scores_by_event
-                    WHERE country = ?
-                    ''',
-                    (athlete,)
-                ).fetchone()
-                if weight is not None:
-                    weighted_athletes.append(weight[0]+1) # add one to offset the default being 1
-                else:
-                    weighted_athletes.append(1)
-
-        # determine the medalists
-        for index in range(0, num_medals):
-            medalist = random.choices(athletes, weights = weighted_athletes)[0] if previously_played else random.choice(athletes)
-            event_medalists.append(medalist)
-            # remove weight from weights if previously played
-            if previously_played:
-                medalist_index = athletes.index(medalist)
-                del weighted_athletes[medalist_index]
-            athletes.remove(medalist) # remove medalist from participants to avoid duplicate winners
-            
-            # update medal table
-            if index == 0:
-                update_game_medals(medalist, 'Gold')
-            elif index == 1:
-                update_game_medals(medalist, 'Silver')
+    # use a weighted random selection if previously played.
+    if previously_played:
+        # get the weights for each country
+        for athlete in athletes:
+            weight = cxn.execute(f'''
+                SELECT `{curr_event}`
+                FROM scores_by_event
+                WHERE country = ?
+                ''',
+                (athlete,)
+            ).fetchone()
+            if weight is not None:
+                weighted_athletes.append(weight[0]+1) # add one to offset the default being 1
             else:
-                update_game_medals(medalist)
+                weighted_athletes.append(1)
+
+    # determine the medalists
+    for index in range(0, num_medals):
+        medalist = random.choices(athletes, weights = weighted_athletes)[0] if previously_played else random.choice(athletes)
+        event_medalists.append(medalist)
+        # remove weight from weights if previously played
+        if previously_played:
+            medalist_index = athletes.index(medalist)
+            del weighted_athletes[medalist_index]
+        athletes.remove(medalist) # remove medalist from participants to avoid duplicate winners
         
-        print(curr_event)
-        print(f'gold medalist: {event_medalists[0]}' )
-        print(f'silver medalist: {event_medalists[1]}' )
-        if num_medals == 4:
-            print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+        # update medal table
+        if index == 0:
+            update_game_medals(medalist, 'Gold')
+        elif index == 1:
+            update_game_medals(medalist, 'Silver')
         else:
-            print(f'bronze medalist: {event_medalists[2]}' )
-        
-        # update scoreboard
-        update_player_scores(event_medalists)
-        
-        input('continue? ')   
+            update_game_medals(medalist)
+    
+    print(curr_event)
+    print(f'gold medalist: {event_medalists[0]}' )
+    print(f'silver medalist: {event_medalists[1]}' )
+    if num_medals == 4:
+        print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+    else:
+        print(f'bronze medalist: {event_medalists[2]}' )
+    
+    # update scoreboard
+    update_player_scores(event_medalists)
+    
+    # input('continue? ')   
 
 '''
 This function updates the medal table for the game throughout the game
@@ -531,6 +661,17 @@ def update_player_scores(medalists: list):
     players.sort_values(by='Score', ascending=False, inplace=True)
     print(players)
 
+def reset_game():
+    global players, game_medal_table, cxn, unplayed_events, previously_played_events, tiers, country_codes, error_msg
+    players = pd.DataFrame(columns = ['Name', 'Tier A', 'Tier B', 'Tier C', 'Tier D', 'Tier E', 'Score'])
+    game_medal_table = pd.DataFrame(columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score'])
+    unplayed_events = []
+    previously_played_events = []
+    tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
+    country_codes = {}
+    error_msg = None
+    database_creation()
+
 '''
 This function goes through required operations to end the game
 '''
@@ -538,8 +679,11 @@ def end_game():
     # currently just closes the connection to the database; function is a placeholder just in case needed in the future.
     cxn.close()
 
+with app.app_context():
+    database_creation()
+
 # execute console game
-database_creation()
-pick_league()
-game_play()
-end_game()
+# database_creation()
+# pick_league()
+# game_play()
+# end_game()

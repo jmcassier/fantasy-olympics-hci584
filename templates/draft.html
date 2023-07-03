@@ -1,0 +1,49 @@
+<html>
+    <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/draft.css" />
+        <link 
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+        />
+    </head>
+    <body>
+        <h1 class="title"> Draft: Round {{ round }} </h1>
+        <div class="mainContainer">
+            <h2>
+                {{ player }}, select a team
+            </h2>
+            <div class="errorMsg">{{ error }}</div>
+            <form class="form" action="/draft" id="league_selection" method="POST" />
+        </div>
+    </body>
+
+    <script type="text/javascript">
+        let countries = '{{ available_countries }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
+        let codes = '{{ country_codes }}'.replace(/&#39;/g, '').replace('[', '').replace(']', '').split(", ");
+        counts = {};
+        countries.forEach(function(country) { counts[country] = (counts[country] || 0) + 1; });
+        countries = Array.from(new Set(countries));
+        for (let i = 0; i < countries.length; i++) {
+            const country = countries[i];
+            const code = codes[i];
+            const timeText = counts[country] == 1 ? 'time' : 'times';
+            const selectButton =
+                `<div class="countrySelect">
+                    <span class="flag fi-${code}"></span>
+                    <div>
+                        <div>
+                            ${country}
+                        </div>
+                        <div>
+                            Available ${counts[country]} ${timeText}
+                        </div>
+                    </div>
+                    <button type="submit" name="${country}" class="countryButton">
+                        Select
+                    </button>
+                </div>`
+            document.getElementById("league_selection").innerHTML += selectButton;
+        }
+    </script>
+</html>

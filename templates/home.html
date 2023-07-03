@@ -1,0 +1,125 @@
+<html>
+    <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/home.css" />
+    </head>
+    <body>
+        <div>
+            <h1 class="title"> Fantasy Olympics </h1>
+            <img src="../static/images/olympic-rings.png" alt="Olympic Rings" class="rings"/>
+        </div>
+        <div class="mainContainer">
+            <p>
+                Fantasy Olympics is a game of chance created to simulate the selection of a 
+                fantasy sports league for the 2020 Tokyo Summer Olympics. Upon starting the game, 
+                each player will draft a league of 8 teams that will score them points. From there,
+                the medalists for each sporting event are determined and displayed on the screen.
+            </p>
+            <h2>
+                How To Play
+            </h2>
+            <div>          
+                <h3> Draft rules: </h3>
+                <ul> 1. Teams are categorized into 5 tiers - A, B, C, D, E. </ul>
+                <ul> 
+                    2. Each league will be made up of 2 A tier teams, 1 B tier team, 1 C tier team, 
+                    1 D tier team and 3 E tier teams.
+                </ul>
+                <ul>
+                    3. Each team will only be available a select number of times (depending on how many 
+                    players).
+                </ul>
+                <ul>
+                    4. In multiplayer mode, the first draft order will be created at random. At the end 
+                    of each round, the order will be flipped.
+                </ul>
+            </div>
+            <h2>
+                Ready To Play
+            </h2>
+            <div>
+                <button class="playerButton" id="1-player" type="button" onClick="createNameFields(1)">
+                    Single Player
+                </button>
+                <button class="playerButton" id="2-player" type="button" onClick="createNameFields(2)">
+                    2 Players
+                </button>
+                <button class="playerButton" id="3-player" type="button" onClick="createNameFields(3)">
+                    3 Players
+                </button>
+                <button class="playerButton" id="4-player" type="button" onClick="createNameFields(4)">
+                    4 Players
+                </button>
+                <button class="playerButton" id="5-player" type="button" onClick="createNameFields(5)">
+                    5 Players
+                </button>
+                <button class="playerButton" id="6-player" type="button" onClick="createNameFields(6)">
+                    6 Players
+                </button>
+                <form action="/draft" id="player-names" method="POST" onsubmit="return validateNames();">
+                    <div id="player-input-container" class="playerInputContainer"></div>
+                    <input id="submit-button" type="submit" name="submit" value="Confirm Players" class="submitButton" hidden/>
+                </form>
+            </div>
+        </div>
+    </body>
+    <script type="text/javascript">
+        active = 0;
+        function createNameFields(numPlayers) {
+            this.active = numPlayers;
+            let currPlayerCount = document.getElementById("player-input-container").children.length;
+            const playerNames = document.getElementById("player-names");
+            for (let i = 1; i <= 6; i++) {
+                const button = document.getElementById(i + "-player");
+                if (i == numPlayers) {
+                    button.setAttribute("class", "playerButtonClicked");
+                }
+                else {
+                    button.setAttribute("class", "playerButton");
+                }
+            }
+            if (currPlayerCount < numPlayers) {
+                for (let i = 0; i < numPlayers - currPlayerCount; i++) {
+                    const div = document.createElement('div');
+                    div.setAttribute("class", "nameInput");
+                    const playerName = document.createElement('input');
+                    playerName.setAttribute("name", "player-" + (i+currPlayerCount));
+                    playerName.setAttribute("id", "player-" + (i+currPlayerCount));
+                    playerName.setAttribute("type", "text");
+                    playerName.setAttribute ("required", true);
+                    const label = document.createElement('label');
+                    label.setAttribute("for", "player-" + (i+currPlayerCount));
+                    label.innerHTML = "Player " + (i+currPlayerCount+1) + " Name";
+                    div.appendChild(label);
+                    div.appendChild(playerName);
+                    document.getElementById("player-input-container").appendChild(div);
+                }
+            }
+            else {
+                for (let i = 0; i < currPlayerCount - numPlayers; i++) {
+                    const playerNames = document.getElementById("player-input-container");
+                    playerNames.removeChild(playerNames.lastChild);
+                }
+            }
+            document.getElementById("submit-button").removeAttribute("hidden");
+        }
+
+        function validateNames() {
+            playerCount = document.getElementById("player-input-container").children.length;
+            playerNames = [];
+            console.log(playerCount);
+            for (let i = 0; i < playerCount; i++) {
+                let playerName = "player-" + i;
+                playerName = document.forms["player-names"][playerName].value;
+                console.log(playerName);
+                if (playerNames.includes(playerName)) {
+                    alert("Multiple players have the same name !");
+                    return false;
+                }
+                playerNames.push(playerName);
+
+            }
+            return true;
+        }
+    </script>
+</html>

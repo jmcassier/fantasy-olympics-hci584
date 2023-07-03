@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/game.css" />
+    </head>
+    <body>
+        <h1 class="title"> GAME PLAY </h1>
+        {{abc}}
+        {{game_over}}
+        {% for row in scoreboard %}
+            <div>
+                {{row[0]}}
+            </div>
+            <div>
+                {{row[1][0]}}
+                {{row[1][1]}}
+            </div>
+            <div>
+                {{row[2]}}
+            </div>
+            <div>
+                {{row[3]}}
+            </div>
+            <div>
+                {{row[4]}}
+            </div>
+            <div>
+                {{row[5][0]}}
+                {{row[5][1]}}
+                {{row[5][2]}}
+            </div>
+            <div>
+                {{row[6]}}
+            </div>
+        {% endfor %}
+
+        <form action="/play-game" id="game_play" method="POST">
+            <button type="submit">CONTINUE</button>
+        </form>
+    </body>
+</html>
