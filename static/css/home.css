@@ -96,7 +96,7 @@ h1, h2, h3, p, div {
 
 .nameInput > input:hover,
 .nameInput > input:focus-visible {
-    border: solid #002F6C;
+    border: 2px solid #002F6C;
     outline: none;
   }
 
