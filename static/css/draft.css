@@ -32,7 +32,7 @@ h1, h2, h3, p, div {
   border: 2px solid;
 }
 
-.countryButton {
+.countryBtn {
   color: white;
   font-weight: 600;
   border: none;
@@ -43,7 +43,7 @@ h1, h2, h3, p, div {
   width: 100%;
 }
 
-.countryButton:hover {
+.countryBtn:hover {
   cursor: pointer;
   background-color: #001939;
 }
