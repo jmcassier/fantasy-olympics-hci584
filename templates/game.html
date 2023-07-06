@@ -8,33 +8,59 @@
     </head>
     <body>
         <h1 class="title"> GAME PLAY </h1>
-        {{game_over}}
-        {% for row in scoreboard %}
-            <div>
-                {{row[0]}}
+        <div class="mainContainer">
+            {% if events_left != 0 %}
+                <div>
+                    Events Left: {{events_left}}
+                </div>
+            {% endif %}
+            {% for medalist in medalists %}
+                <div>
+                    {{medalist}}
+                </div>
+            {% endfor %}
+            {{game_over}}
+            <div class="scoreboard">
+                <h2 class="scoreboardTitle">Scoreboard</h2>
+                {% for row in scoreboard %}
+                    <div class="playerScore">
+                        {% if row[7] == 1 %}
+                            <div class="firstPlace">
+                                {{row[7]}}
+                            </div>
+                        {% elif row[7] == 2 %}
+                            <div class="secondPlace">
+                                {{row[7]}}
+                            </div>
+                        {% elif row[7] == 3 %}
+                            <div class="thirdPlace">
+                                {{row[7]}}
+                            </div>
+                        {% else %}
+                            <div class="outsideTopThree">
+                                {{row[7]}}
+                            </div>
+                        {% endif %}
+                        <div>
+                            {{row[0]}}
+                        </div>
+                        <div class="countries" hidden>
+                            {{row[1][0]}}
+                            {{row[1][1]}}
+                            {{row[2]}}
+                            {{row[3]}}
+                            {{row[4]}}
+                            {{row[5][0]}}
+                            {{row[5][1]}}
+                            {{row[5][2]}}
+                        </div>
+                        <div>
+                            {{row[6]}}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-            <div>
-                {{row[1][0]}}
-                {{row[1][1]}}
-            </div>
-            <div>
-                {{row[2]}}
-            </div>
-            <div>
-                {{row[3]}}
-            </div>
-            <div>
-                {{row[4]}}
-            </div>
-            <div>
-                {{row[5][0]}}
-                {{row[5][1]}}
-                {{row[5][2]}}
-            </div>
-            <div>
-                {{row[6]}}
-            </div>
-        {% endfor %}
+        </div>
 
         <form action="/play-game" id="game_play" method="POST">
             <button type="submit">CONTINUE</button>

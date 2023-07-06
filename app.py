@@ -15,7 +15,8 @@ players = pd.DataFrame(
         'Tier C', 
         'Tier D', 
         'Tier E', 
-        'Score'
+        'Score',
+        'Rank'
     ]
 )
 cxn = sqlite3.connect('olympic_stats.db', check_same_thread=False)
@@ -125,13 +126,13 @@ def play_game():
         print(players)
         return render_template('game.html', game_over="game over")
     
-    game_play()
+    event_medalists = game_play()
     scoreboard_data = []
     for player in players.iterrows():
         scoreboard_data.append(
             players.loc[player[0], :].values.flatten().tolist()
         )
-    return render_template('game.html', scoreboard=scoreboard_data)
+    return render_template('game.html', scoreboard=scoreboard_data, medalists=event_medalists, events_left=len(unplayed_events))
 
 def set_players(players_dict: dict):
     '''
@@ -154,7 +155,8 @@ def set_players(players_dict: dict):
                 'Tier C': None,
                 'Tier D': None,
                 'Tier E': [],
-                'Score': 0
+                'Score': 0,
+                'Rank': 0,
         }
     current_draft_pick = 0
     random.shuffle(draft_order)
@@ -665,6 +667,7 @@ def game_play():
     
     # update scoreboard
     update_player_scores(event_medalists)
+    return event_medalists
 
 def update_game_medals(country: str, medal: str = 'Bronze'):
     '''
@@ -732,8 +735,25 @@ def update_player_scores(medalists: list):
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
     
-    players.sort_values(by='Score', ascending=False, inplace=True)
+    players.sort_values(
+        by=['Score', 'Name'], 
+        ascending=[False, True], 
+        inplace=True
+    )
+    set_rank()
     print(players)
+
+def set_rank():
+    prev_score = 0
+    rank = 1
+    ordered_idx = 1
+    for index, player in players.iterrows():
+        if (player[6] != prev_score):
+            rank = ordered_idx
+        print(f'rank {rank}')
+        players.at[index, 'Rank'] = int(rank)
+        prev_score = player[6]
+        ordered_idx += 1
 
 def reset_game():
     '''
@@ -750,7 +770,8 @@ def reset_game():
             'Tier C', 
             'Tier D', 
             'Tier E', 
-            'Score'
+            'Score',
+            'Rank'
         ]
     )
     game_medal_table = pd.DataFrame(
