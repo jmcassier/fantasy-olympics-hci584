@@ -656,6 +656,14 @@ def game_play():
         
         # remove medalist from participants to avoid duplicate winners
         athletes.remove(medalist)
+
+    print(curr_event)
+    print(f'gold medalist: {event_medalists[0]}' )
+    print(f'silver medalist: {event_medalists[1]}' )
+    if num_medals == 4:
+        print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
+    else:
+        print(f'bronze medalist: {event_medalists[2]}' )
         
         # update medal table
         if index == 0:

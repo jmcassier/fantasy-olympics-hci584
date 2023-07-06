@@ -21,10 +21,18 @@
 Beyond Python, the project currently requires you to install Pandas. To do this, run
 
 	pip install pandas
+ 	pip install Flask
+  	pip install Flask-CacheControl
+   	pip install numpy
 
 To run the program, in the project directory in the terminal run the following command:
  
- 	python app.py
+ 	set FLASK_APP app.py 
+  	flask run
+
+The program call also be run using in debug mode the optional debug flag:
+
+	flask run --debug
 
 ## User Activity Flow
 
