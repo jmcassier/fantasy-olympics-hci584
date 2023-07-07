@@ -5,6 +5,7 @@ import pandas as pd
 import sqlite3
 import random
 import numpy as np
+import json
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(
@@ -33,11 +34,11 @@ draft_order = []
 current_draft_pick = 0
 draft_round = [1, 'A']
 country_codes = {} # used to determine flag icons in UI
-error_msg = None # any error message to be displayed on the UI.
+session = {"messages": {}} # mock way of establishing session data
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/', methods = ["POST", "GET"])
 @dont_cache()
 def home_page():
     '''
@@ -47,6 +48,9 @@ def home_page():
 
     # if the home page loads with players or teams in the medal table,
     # reset the game
+    if request.method == "POST":
+        redirect(url_for('home_page'))
+    
     if (len(players.index) > 0) or (len(game_medal_table) > 0):
         reset_game()
     
@@ -61,7 +65,7 @@ def draft_page():
     '''
 
     # ensure global variables are used
-    global draft_order, current_draft_pick, draft_round, error_msg
+    global draft_order, current_draft_pick, draft_round, session
 
     # actions to take if Confirm Players button was clicked
     if (request.method == "POST") and \
@@ -69,8 +73,8 @@ def draft_page():
         (request.form["submit"] == "Confirm Players"):
         if len(players) == 0:
             set_players(request.form.to_dict(flat=False))
-        error_msg = None
-        return redirect(url_for('draft_page'), 302)
+        session["messages"] = {}
+        return redirect(url_for('draft_page'))
     
     # actions to take if a team was selected by a players
     if request.method == "POST":
@@ -80,18 +84,17 @@ def draft_page():
             # redirect to the main game play page if draft round is 9,
             # which indicates the draft is over.
             if draft_round[0] == 9:
-                return redirect(url_for('play_game'))
-            error_msg = None
+                return redirect(url_for('play_game'), 307)
+            session["messages"] = {}
 
             # redirect for POST-redirect-GET to ensure form isn't 
             # submitted multiple times if reloaded
-            return redirect(url_for('draft_page'), 302) 
-
-        error_msg = '''You have already selected this country. 
-            Please select a different country'''
+            return redirect(url_for('draft_page')) 
+        
+        session["messages"] = {"error_message": "You have already selected this country. Please select a different country"}
         # redirect for POST-redirect-GET to ensure form isn't submitted
         # multiple times if reloaded        
-        return redirect(url_for('draft_page'), 302)
+        return redirect(url_for('draft_page'))
     
     # actions to take if the page is rendered for a GET request.
     else:
@@ -100,13 +103,13 @@ def draft_page():
             if country_codes[country] not in avail_country_codes:
                 avail_country_codes.append(country_codes[country])
 
-        if error_msg is not None:
+        if "error_message" in session["messages"]:
             return render_template('draft.html',
                                    player=draft_order[current_draft_pick], 
                                    available_countries=tiers[draft_round[1]], 
                                    country_codes=avail_country_codes,
                                    round=draft_round[0],
-                                   error=error_msg)
+                                   error=session["messages"]["error_message"])
         
         return render_template('draft.html', 
                                player=draft_order[current_draft_pick],
@@ -121,18 +124,24 @@ def play_game():
     Creates the game play page of the UI which allows for players to
     see how the game is unfolding and their rank amongst other players.
     '''
+    if request.method == "POST":
+        event_results = game_play()
+        session['messages'] = {"event": event_results[0], "medalists": event_results[1]}
+        return redirect(url_for('play_game'))
     
-    if len(unplayed_events) == 0:
-        print(players)
-        return render_template('game.html', game_over="game over")
-    
-    event_medalists = game_play()
+    messages = session['messages']
+    print(messages['event'])
+    print(messages['medalists'])
+    medalist_country_codes = []
+    for medalist in messages['medalists']:
+        medalist_country_codes.append(country_codes[medalist])
+
     scoreboard_data = []
     for player in players.iterrows():
         scoreboard_data.append(
             players.loc[player[0], :].values.flatten().tolist()
         )
-    return render_template('game.html', scoreboard=scoreboard_data, medalists=event_medalists, events_left=len(unplayed_events))
+    return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=len(unplayed_events))
 
 def set_players(players_dict: dict):
     '''
@@ -656,14 +665,6 @@ def game_play():
         
         # remove medalist from participants to avoid duplicate winners
         athletes.remove(medalist)
-
-    print(curr_event)
-    print(f'gold medalist: {event_medalists[0]}' )
-    print(f'silver medalist: {event_medalists[1]}' )
-    if num_medals == 4:
-        print(f'bronze medalists: {event_medalists[2]} and {event_medalists[3]}' )
-    else:
-        print(f'bronze medalist: {event_medalists[2]}' )
         
         # update medal table
         if index == 0:
@@ -675,7 +676,7 @@ def game_play():
     
     # update scoreboard
     update_player_scores(event_medalists)
-    return event_medalists
+    return (curr_event, event_medalists)
 
 def update_game_medals(country: str, medal: str = 'Bronze'):
     '''
@@ -769,7 +770,7 @@ def reset_game():
     reset to ensure there are no issues with the game play.
     '''
     global players, game_medal_table, cxn, unplayed_events
-    global previously_played_events, tiers, country_codes, error_msg
+    global previously_played_events, tiers, country_codes, session
     players = pd.DataFrame(
         columns = [
             'Name', 
@@ -789,7 +790,7 @@ def reset_game():
     previously_played_events = []
     tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
     country_codes = {}
-    error_msg = None
+    session["message"] = {}
     database_creation()
 
 def end_game():
