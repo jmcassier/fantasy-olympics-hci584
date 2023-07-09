@@ -83,21 +83,21 @@
                     <h2 class="scoreboardTitle">Scoreboard</h2>
                     {% for row in scoreboard %}
                         <div class="playerScore">
-                            {% if row[7] == 1 %}
+                            {% if row[3] == 1 %}
                                 <div class="scoreboardRank gold">
-                                    {{row[7]}}
+                                    {{row[3]}}
                                 </div>
-                            {% elif row[7] == 2 %}
+                            {% elif row[3] == 2 %}
                                 <div class="scoreboardRank silver">
-                                    {{row[7]}}
+                                    {{row[3]}}
                                 </div>
-                            {% elif row[7] == 3 %}
+                            {% elif row[3] == 3 %}
                                 <div class="scoreboardRank bronze">
-                                    {{row[7]}}
+                                    {{row[3]}}
                                 </div>
                             {% else %}
                                 <div class="scoreboardRank">
-                                    {{row[7]}}
+                                    {{row[3]}}
                                 </div>
                             {% endif %}
                             <div>
@@ -106,15 +106,15 @@
                             <div class="countries" hidden>
                                 {{row[1][0]}}
                                 {{row[1][1]}}
-                                {{row[2]}}
-                                {{row[3]}}
-                                {{row[4]}}
-                                {{row[5][0]}}
-                                {{row[5][1]}}
-                                {{row[5][2]}}
+                                {{row[1][2]}}
+                                {{row[1][3]}}
+                                {{row[1][4]}}
+                                {{row[1][5]}}
+                                {{row[1][6]}}
+                                {{row[1][7]}}
                             </div>
                             <div>
-                                {{row[6]}}
+                                {{row[2]}}
                             </div>
                         </div>
                     {% endfor %}

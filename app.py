@@ -10,13 +10,11 @@ tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(
     columns = [
         'Name', 
-        'Tier A', 
-        'Tier B', 
-        'Tier C', 
-        'Tier D', 
-        'Tier E', 
+        'League', 
         'Score',
-        'Rank'
+        'Rank',
+        'Bet On',
+        'Bet Amount'
     ]
 )
 cxn = sqlite3.connect('olympic_stats.db', check_same_thread=False)
@@ -158,13 +156,11 @@ def set_players(players_dict: dict):
         draft_order.append(name)
         players.loc[len(players.index)] = {
                 'Name': name,
-                'Tier A': [],
-                'Tier B': None,
-                'Tier C': None,
-                'Tier D': None,
-                'Tier E': [],
+                'League': [],
                 'Score': 0,
                 'Rank': 0,
+                'Bet On': None,
+                'Bet Amount': 0
         }
     current_draft_pick = 0
     random.shuffle(draft_order)
@@ -200,16 +196,13 @@ def draft_team(drafted_team: str, tier: str):
         players['Name'] == draft_order[current_draft_pick]
     ][0]
 
-    if (tier == 'A' or tier == 'E') and \
-        (drafted_team in players.at[player_index, 'Tier ' + tier]):
+    if drafted_team in players.at[player_index, 'League']:
         return False
     
-    if tier == 'A' or tier == 'E':
-        players.at[player_index, 'Tier ' + tier].append(drafted_team)
-    else:
-        players.at[player_index, 'Tier ' + tier] = drafted_team
-    
+
+    players.at[player_index, 'League'].append(drafted_team)
     tiers[tier].remove(drafted_team)
+    
     current_draft_pick = (current_draft_pick + 1) % len(draft_order)
     if current_draft_pick == 0:
         draft_order.reverse()
@@ -719,16 +712,7 @@ def update_player_scores(medalists: list):
 
     for index, player in players.iterrows():
         # aggregates a persons league into a single list
-        league = [
-            player[1][0], 
-            player[1][1], 
-            player[2], 
-            player[3], 
-            player[4], 
-            player[5][0], 
-            player[5][1], 
-            player[5][2]
-        ]
+        league = player[1]
         
         # increase score by 3 if the gold medalist is in their league
         if medalists[0] in league:
@@ -742,6 +726,14 @@ def update_player_scores(medalists: list):
         # increase score by 1 if the bronze medalist is in their league
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
+
+        bet_on = player[1]
+        if bet_on is not None:
+            if bet_on == medalists[0]:
+                players.at[index, 'Score'] += players.at[index, 'Bet Amount']
+            elif bet_on not in medalists:
+                players.at[index, 'Score'] -= players.at[index, 'Bet Amount']
+
     
     players.sort_values(
         by=['Score', 'Name'], 
@@ -756,11 +748,11 @@ def set_rank():
     rank = 1
     ordered_idx = 1
     for index, player in players.iterrows():
-        if (player[6] != prev_score):
+        if (player[2] != prev_score):
             rank = ordered_idx
         print(f'rank {rank}')
         players.at[index, 'Rank'] = int(rank)
-        prev_score = player[6]
+        prev_score = player[2]
         ordered_idx += 1
 
 def reset_game():
@@ -773,13 +765,11 @@ def reset_game():
     players = pd.DataFrame(
         columns = [
             'Name', 
-            'Tier A', 
-            'Tier B', 
-            'Tier C', 
-            'Tier D', 
-            'Tier E', 
+            'League', 
             'Score',
-            'Rank'
+            'Rank',
+            'Bet On',
+            'Bet Amount'
         ]
     )
     game_medal_table = pd.DataFrame(
