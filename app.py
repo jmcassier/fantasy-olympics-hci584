@@ -5,7 +5,6 @@ import pandas as pd
 import sqlite3
 import random
 import numpy as np
-import json
 
 tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
 players = pd.DataFrame(
