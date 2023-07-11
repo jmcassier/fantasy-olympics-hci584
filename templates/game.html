@@ -9,6 +9,7 @@
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
         />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
     <body style="min-width: 1176px">
         <div class="mainContainer">
@@ -82,7 +83,7 @@
                         </div>
                     {% endif %}
                     <h2>{{next_event}}</h2>
-                    {{next_participants}}
+                    <div id="betting-container"></div>
                 </div>
                 <div class="scoreboard">
                     <h2 class="scoreboardTitle">Scoreboard</h2>
@@ -151,11 +152,100 @@
         let codes = '{{ flag_codes }}'.replace(
             /&#39;/g, ''
         ).replace('[', '').replace(']', '').split(", ");
-        setFlag("gold", codes[0]);
-        setFlag("silver", codes[1]);
-        setFlag("bronze-1", codes[2]);
-        if (codes.length === 4) {
-            setFlag("bronze-2", codes[3]);
+        if (codes[0] != '') {
+            setFlag("gold", codes[0]);
+            setFlag("silver", codes[1]);
+            setFlag("bronze-1", codes[2]);
+            if (codes.length === 4) {
+                setFlag("bronze-2", codes[3]);
+            }
+        }
+        
+
+        let players = '{{ players }}'.replace(
+            /&#39;/g, ''
+        ).replace('[', '').replace(']', '').split(", ");
+
+        let betCountries = '{{ next_participants }}'.replace(
+            /&#39;/g, ''
+        ).replace('[', '').replace(']', '').split(", ");
+
+        for (player of players) {
+            const form = document.createElement('form');
+            form.setAttribute("id", player)
+            const h3 = document.createElement('h3');
+            h3.innerHTML = `Place your Bet, ${player}`;
+            form.appendChild(h3);
+            for (country of betCountries) {
+                const div = document.createElement('div');
+                const radio = document.createElement('input');
+                radio.setAttribute("type", "radio");
+                radio.setAttribute("id", country);
+                radio.setAttribute("value", country);
+                radio.setAttribute("name", player);
+                const label = document.createElement('label');
+                label.setAttribute("for", country);
+                label.innerText = country;
+                div.appendChild(radio);
+                div.appendChild(label);
+                form.appendChild(div);
+            }
+            const amount = document.createElement('input');
+            amount.setAttribute("type", "text");
+            amount.setAttribute("id", `${player}-amount`);
+            amount.setAttribute("name", "amount");
+            const placeBet = document.createElement('button');
+            placeBet.setAttribute("type", "button");
+            placeBet.setAttribute("id", "Place Bet");
+            placeBet.setAttribute("value", "Place Bet");
+            placeBet.innerText = "Place Bet";
+            placeBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Placed')`)
+            const noBet = document.createElement('button');
+            noBet.setAttribute("type", "button");
+            noBet.setAttribute("id", "Skip Bet");
+            noBet.setAttribute("value", "Skip Bet");
+            noBet.innerText = "Skip Bet";
+            noBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Skip')`)
+            form.appendChild(amount);
+            form.appendChild(placeBet);
+            form.appendChild(noBet);
+            document.getElementById('betting-container').appendChild(form);
+        }
+
+        function placeBet(inputNodes, player, type) {
+            let data = [];
+            if (type === 'Skip') {
+                data = [
+                    {"country": "None"},
+                    {"player": player},
+                    {"bet": 0}
+                ];
+            }
+            else {
+                let country = null;
+                for (node of inputNodes) {
+                    if (node.checked) {
+                        country = node.value;
+                        break;
+                    }
+                }
+                data = [
+                    {"country": country},
+                    {"player": player},
+                    {"bet": parseInt(document.getElementById(`${player}-amount`).value)}
+                ];
+            }
+            console.log(data);
+            $.ajax({
+                type: "POST",
+                url: "/bet",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: 'json',
+                success: function(result) {
+                    const x = 1
+                }
+            });
         }
     </script>
 </html>

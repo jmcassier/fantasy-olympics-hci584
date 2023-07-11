@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_cachecontrol import dont_cache
 import csv
 import pandas as pd
@@ -86,6 +86,7 @@ def draft_page():
                 unplayed_events.remove(next_event)
                 athletes = get_event_athletes(next_event)
                 session['messages'] = {"next_event": next_event, "next_participants": athletes}
+                draft_order.sort()
                 return redirect(url_for('play_game'), 307)
             session["messages"] = {}
 
@@ -128,8 +129,6 @@ def play_game():
     '''
     if request.method == "POST":
 
-        print(request.form.get("submit"))
-
         if (request.form.get("submit") is not None) and (request.form["submit"] == "Play Event"):
             print("EVENT PLAY BTN CLICKED")
             curr_event = session['messages']['next_event']
@@ -142,6 +141,7 @@ def play_game():
                 session['messages'] = {"event": event_results[0], "medalists": event_results[1], "next_event": next_event, "next_participants": athletes}
             else:
                 session['messages'] = {"event": event_results[0], "medalists": event_results[1]}    
+        
         else:
             if (request.form.get("submit") is not None) and (request.form["submit"] == "Draft Team"):
                 print("END DRAFT !!!")
@@ -167,10 +167,10 @@ def play_game():
         )
 
     if 'event' in messages and 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
+        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'], players=draft_order)
     
     if 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
+        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'], players=draft_order)
     
     return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=0)
 
@@ -633,6 +633,29 @@ def read_country_codes(file: str):
         for code in reader:
             country_codes[code[0]] = code[1]
 
+@app.route('/bet', methods = ["POST"])
+def set_bet():
+    data = request.get_json()
+    country = data[0]['country']
+    player = data[1]['player']
+    bet = data[2]['bet']
+
+    player_index = players.index[
+        players['Name'] == player
+    ][0]
+
+    if country is "None":
+        players.at[player_index, 'Bet On'] = None
+        players.at[player_index, 'Bet Amount'] = 0
+    
+    else:
+        players.at[player_index, 'Bet On'] = country
+        players.at[player_index, 'Bet Amount'] = bet
+
+    print(players)
+    results = {"resp": True}
+    return jsonify(results)
+
 def game_play(curr_event: str, athletes: list):
     '''
     This function performs the majority of the game play operations
@@ -765,8 +788,10 @@ def update_player_scores(medalists: list):
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
 
-        bet_on = player[1]
+        bet_on = player[4]
         if bet_on is not None:
+            print('bet on !!!')
+            print(bet_on)
             if bet_on == medalists[0]:
                 players.at[index, 'Score'] += players.at[index, 'Bet Amount']
                 players.at[index, 'Net Bet Score'] += players.at[index, 'Bet Amount']
