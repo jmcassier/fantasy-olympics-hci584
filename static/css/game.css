@@ -2,11 +2,195 @@
     text-align: center;
     color: #002F6C;
     margin-top: 24px;
-    margin-bottom: 0;
+    margin-bottom: 20px;
     font-size: 52px;
   }
   
-  h1, h2, h3, p, div {
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
+h1, h2, h3, p, div {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.scoreboardTitle {
+  width: fit-content;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.scoreboard {
+  box-shadow: 10px 10px 10px #d7d7d7;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin: 10px;
+  background-color: #F8F8FF;
+  display: flex;
+  flex-direction: column;
+  row-gap: 24px;
+  width: fit-content;
+  height: fit-content;
+  align-items: center;
+}
+
+.scoreboardRank {
+  display: flex;
+  background-color: transparent;
+  border-radius: 24px;
+  padding: 9px 8px 8px 8px;
+  width: 16px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.playerScore {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 60px 200px 60px;
+  column-gap: 16px;
+  width: fit-content;
+}
+
+.mainContainer {
+  line-height: 1.5;
+  text-align: left;
+  width: calc(100% - 104px);
+  max-width: 1050px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.gameData {
+  display: flex;
+  justify-content: space-between;
+  column-gap: 24px;
+  row-gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.podium {
+  min-width: 441px;
+  max-width: 598px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.medalists {
+  display: flex;
+  column-gap: 30px;
+  align-items: flex-end;
+  height: 221px;
+}
+
+.medalist {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 11px;
+  border: none;
+  border-radius: 16px;
+  align-items: center;
+  row-gap: 18px;
+  box-shadow: 10px 10px 10px #d7d7d7;
+  background-color: #F8F8FF;
+  text-align: center;
+  width: 105px;
+  height: 139px;
+}
+
+.gold {
+  background-color: gold !important;
+}
+
+.silver {
+  background-color: silver !important;
+}
+
+.bronze {
+  background-color: #cd7f32 !important;  
+}
+
+.flag {
+  background-color: white;
+  background-size: 60px auto;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 45px;
+  line-height: 1em;
+  border: 2px solid;
+}
+
+.continueBtn {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: #002F6C;
+}
+
+.continueBtn:hover,
+.continueBtn:focus {
+  cursor: pointer;
+  background-color: #001939;
+  outline: none;
+}
+
+.endGame > button {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: #960018;
+}
+
+.endGame > button:hover,
+.endGame> button:focus {
+  cursor: pointer;
+  background-color: #58000f;
+  outline: none;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  direction: rtl;
+  width: 100%;
+}
+
+.quitGame,
+.endGame {
+  display: flex;
+  height: 78px;
+  margin-top: 24px;
+  margin-bottom: 0;
+  align-items: center;
+  flex-direction: row;
+}
+
+.quitGame > button {
+  color: #960018;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  border: 2px solid #960018;
+  background-color: transparent;
+}
+
+.quitGame > button:hover,
+.quitGame > button:focus {
+  cursor: pointer;
+  background-color: #9600183b;
+  outline: none;
+}

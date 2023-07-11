@@ -5,39 +5,157 @@
             content="no-cache, no-store, must-revalidate"
         />
         <link rel="stylesheet" href="../static/css/game.css" />
+        <link 
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
+        />
     </head>
-    <body>
-        <h1 class="title"> GAME PLAY </h1>
-        {{game_over}}
-        {% for row in scoreboard %}
-            <div>
-                {{row[0]}}
+    <body style="min-width: 1176px">
+        <div class="mainContainer">
+            {% if events_left != 0 %}
+                <div class="header">
+                    <form action="/" id="game_play" method="POST" class="quitGame">
+                        <button type="submit">Quit Game</button>
+                    </form>
+                    <h1 class="title"> GAME PLAY </h1>
+                </div>
+                <h2>
+                    Events Left: {{events_left}}
+                </h2>
+            {% else %}
+                <h1 class="title"> GAME PLAY </h1>
+                <h2> Game Over </h2>
+            {% endif %}
+            <div class="gameData">
+                <div class="podium">
+                    {% if medalists %}
+                        <h2>
+                            {{event}}
+                        </h2>
+                        <div class="medalists">
+                            <div class="medalist silver" style="transform: translateY(-25px)">
+                                <span id="silver-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[1]}}
+                                    </div>
+                                    <div>
+                                        2
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="medalist gold" style="transform: translateY(-50px)">
+                                <span id="gold-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[0]}}
+                                    </div>
+                                    <div>
+                                        1
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="medalist bronze">
+                                <span id="bronze-1-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[2]}}
+                                    </div>
+                                    <div>
+                                        3
+                                    </div>
+                                </div>
+                            </div>
+                            {% if medalists[3] != null %}
+                                <div class="medalist bronze">
+                                    <span id="bronze-2-flag"></span>
+                                    <div>
+                                        <div>
+                                            {{medalists[3]}}
+                                        </div>
+                                        <div>
+                                            3
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <h2>{{next_event}}</h2>
+                    {{next_participants}}
+                </div>
+                <div class="scoreboard">
+                    <h2 class="scoreboardTitle">Scoreboard</h2>
+                    {% for row in scoreboard %}
+                        <div class="playerScore">
+                            {% if row[3] == 1 %}
+                                <div class="scoreboardRank gold">
+                                    {{row[3]}}
+                                </div>
+                            {% elif row[3] == 2 %}
+                                <div class="scoreboardRank silver">
+                                    {{row[3]}}
+                                </div>
+                            {% elif row[3] == 3 %}
+                                <div class="scoreboardRank bronze">
+                                    {{row[3]}}
+                                </div>
+                            {% else %}
+                                <div class="scoreboardRank">
+                                    {{row[3]}}
+                                </div>
+                            {% endif %}
+                            <div>
+                                {{row[0]}}
+                            </div>
+                            <div class="countries" hidden>
+                                {{row[1][0]}}
+                                {{row[1][1]}}
+                                {{row[1][2]}}
+                                {{row[1][3]}}
+                                {{row[1][4]}}
+                                {{row[1][5]}}
+                                {{row[1][6]}}
+                                {{row[1][7]}}
+                            </div>
+                            <div>
+                                {{row[2]}}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
-            <div>
-                {{row[1][0]}}
-                {{row[1][1]}}
-            </div>
-            <div>
-                {{row[2]}}
-            </div>
-            <div>
-                {{row[3]}}
-            </div>
-            <div>
-                {{row[4]}}
-            </div>
-            <div>
-                {{row[5][0]}}
-                {{row[5][1]}}
-                {{row[5][2]}}
-            </div>
-            <div>
-                {{row[6]}}
-            </div>
-        {% endfor %}
-
-        <form action="/play-game" id="game_play" method="POST">
-            <button type="submit">CONTINUE</button>
-        </form>
+            {% if events_left != 0 %}
+                <form action="/play-game" id="game_play" method="POST">
+                    <button type="submit" name="submit" value="Play Event" class="continueBtn">CONTINUE</button>
+                </form>
+            {% else %}
+                <form action="/" id="game_play" method="POST" class="endGame">
+                    <button type="submit">End Game</button>
+                </form>
+            {% endif %}
+        </div>
     </body>
+    <script type="text/javascript">
+        function setFlag(color, code) {
+            const flag = document.getElementById(`${color}-flag`);
+            if (code === 'rings') {
+                flag.setAttribute("class", "flag");
+                flag.setAttribute("style", "background-image: url('../static/images/olympic-rings.png')");
+            }
+            else {
+                flag.setAttribute("class", `flag fi-${code}`);
+            }
+        }
+
+        let codes = '{{ flag_codes }}'.replace(
+            /&#39;/g, ''
+        ).replace('[', '').replace(']', '').split(", ");
+        setFlag("gold", codes[0]);
+        setFlag("silver", codes[1]);
+        setFlag("bronze-1", codes[2]);
+        if (codes.length === 4) {
+            setFlag("bronze-2", codes[3]);
+        }
+    </script>
 </html>

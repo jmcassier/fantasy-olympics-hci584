@@ -7,14 +7,19 @@
             href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
         />
     </head>
-    <body>
-        <h1 class="title"> Draft: Round {{ round }} </h1>
+    <body style="min-width: 875px">
         <div class="mainContainer">
+            <div class="header">
+                <form action="/" id="game_play" method="POST" class="quitGame">
+                    <button type="submit">Quit Game</button>
+                </form>
+                <h1 class="title"> Draft: Round {{ round }} </h1>
+            </div>
             <h2>
                 {{ player }}, select a team
             </h2>
             <div class="errorMsg">{{ error }}</div>
-            <form class="form" action="/draft" id="league-selection" method="POST" />
+            <form class="form" action="/draft" id="league-selection" method="POST"></form>
         </div>
     </body>
 
@@ -45,7 +50,7 @@
                             Available ${counts[country]} ${timeText}
                         </div>
                     </div>
-                    <button type="submit" name="${country}" class="countryBtn">
+                    <button type="submit" name="${country}" class="countryBtn" value="Draft Team">
                         Select
                     </button>
                 </div>`
