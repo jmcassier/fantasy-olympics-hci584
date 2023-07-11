@@ -12,72 +12,77 @@
     </head>
     <body style="min-width: 1176px">
         <div class="mainContainer">
-            <div class="header">
-                <form action="/" id="game_play" method="POST" class="quitGame">
-                    <button type="submit">Quit Game</button>
-                </form>
-                <h1 class="title"> GAME PLAY </h1>
-            </div>
             {% if events_left != 0 %}
+                <div class="header">
+                    <form action="/" id="game_play" method="POST" class="quitGame">
+                        <button type="submit">Quit Game</button>
+                    </form>
+                    <h1 class="title"> GAME PLAY </h1>
+                </div>
                 <h2>
                     Events Left: {{events_left}}
                 </h2>
             {% else %}
-                {{game_over}}
+                <h1 class="title"> GAME PLAY </h1>
+                <h2> Game Over </h2>
             {% endif %}
             <div class="gameData">
                 <div class="podium">
-                    <h2>
-                        {{event}}
-                    </h2>
-                    <div class="medalists">
-                        <div class="medalist silver" style="transform: translateY(-25px)">
-                            <span id="silver-flag"></span>
-                            <div>
-                                <div>
-                                    {{medalists[1]}}
-                                </div>
-                                <div>
-                                    2
-                                </div>
-                            </div>
-                        </div>
-                        <div class="medalist gold" style="transform: translateY(-50px)">
-                            <span id="gold-flag"></span>
-                            <div>
-                                <div>
-                                    {{medalists[0]}}
-                                </div>
-                                <div>
-                                    1
-                                </div>
-                            </div>
-                        </div>
-                        <div class="medalist bronze">
-                            <span id="bronze-1-flag"></span>
-                            <div>
-                                <div>
-                                    {{medalists[2]}}
-                                </div>
-                                <div>
-                                    3
-                                </div>
-                            </div>
-                        </div>
-                        {% if medalists[3] != null %}
-                            <div class="medalist bronze">
-                                <span id="bronze-2-flag"></span>
+                    {% if medalists %}
+                        <h2>
+                            {{event}}
+                        </h2>
+                        <div class="medalists">
+                            <div class="medalist silver" style="transform: translateY(-25px)">
+                                <span id="silver-flag"></span>
                                 <div>
                                     <div>
-                                        {{medalists[3]}}
+                                        {{medalists[1]}}
+                                    </div>
+                                    <div>
+                                        2
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="medalist gold" style="transform: translateY(-50px)">
+                                <span id="gold-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[0]}}
+                                    </div>
+                                    <div>
+                                        1
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="medalist bronze">
+                                <span id="bronze-1-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[2]}}
                                     </div>
                                     <div>
                                         3
                                     </div>
                                 </div>
                             </div>
-                        {% endif %}
-                    </div>
+                            {% if medalists[3] != null %}
+                                <div class="medalist bronze">
+                                    <span id="bronze-2-flag"></span>
+                                    <div>
+                                        <div>
+                                            {{medalists[3]}}
+                                        </div>
+                                        <div>
+                                            3
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <h2>{{next_event}}</h2>
+                    {{next_participants}}
                 </div>
                 <div class="scoreboard">
                     <h2 class="scoreboardTitle">Scoreboard</h2>
@@ -120,9 +125,15 @@
                     {% endfor %}
                 </div>
             </div>
-            <form action="/play-game" id="game_play" method="POST">
-                <button type="submit" class="continueBtn">CONTINUE</button>
-            </form>
+            {% if events_left != 0 %}
+                <form action="/play-game" id="game_play" method="POST">
+                    <button type="submit" name="submit" value="Play Event" class="continueBtn">CONTINUE</button>
+                </form>
+            {% else %}
+                <form action="/" id="game_play" method="POST" class="endGame">
+                    <button type="submit">End Game</button>
+                </form>
+            {% endif %}
         </div>
     </body>
     <script type="text/javascript">

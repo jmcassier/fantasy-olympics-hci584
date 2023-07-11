@@ -14,7 +14,8 @@ players = pd.DataFrame(
         'Score',
         'Rank',
         'Bet On',
-        'Bet Amount'
+        'Bet Amount',
+        'Net Bet Score',
     ]
 )
 cxn = sqlite3.connect('olympic_stats.db', check_same_thread=False)
@@ -81,6 +82,10 @@ def draft_page():
             # redirect to the main game play page if draft round is 9,
             # which indicates the draft is over.
             if draft_round[0] == 9:
+                next_event = random.choice(unplayed_events)
+                unplayed_events.remove(next_event)
+                athletes = get_event_athletes(next_event)
+                session['messages'] = {"next_event": next_event, "next_participants": athletes}
                 return redirect(url_for('play_game'), 307)
             session["messages"] = {}
 
@@ -122,23 +127,53 @@ def play_game():
     see how the game is unfolding and their rank amongst other players.
     '''
     if request.method == "POST":
-        event_results = game_play()
-        session['messages'] = {"event": event_results[0], "medalists": event_results[1]}
+
+        print(request.form.get("submit"))
+
+        if (request.form.get("submit") is not None) and (request.form["submit"] == "Play Event"):
+            print("EVENT PLAY BTN CLICKED")
+            curr_event = session['messages']['next_event']
+            curr_participants = session['messages']['next_participants']
+            event_results = game_play(curr_event, curr_participants)
+            if (len(unplayed_events) > 0):
+                next_event = random.choice(unplayed_events)
+                unplayed_events.remove(next_event)
+                athletes = get_event_athletes(next_event)
+                session['messages'] = {"event": event_results[0], "medalists": event_results[1], "next_event": next_event, "next_participants": athletes}
+            else:
+                session['messages'] = {"event": event_results[0], "medalists": event_results[1]}    
+        else:
+            if (request.form.get("submit") is not None) and (request.form["submit"] == "Draft Team"):
+                print("END DRAFT !!!")
+            session['messages'] = {"next_event": session['messages']['next_event'], "next_participants": session['messages']['next_participants']}
+
         return redirect(url_for('play_game'))
     
     messages = session['messages']
-    print(messages['event'])
-    print(messages['medalists'])
-    medalist_country_codes = []
-    for medalist in messages['medalists']:
-        medalist_country_codes.append(country_codes[medalist])
+    if 'event' in messages:
+        print(messages['event'])
+        messages['event']
+    if 'medalists' in messages:
+        print(messages['medalists'])
+        messages['medalists']
+        medalist_country_codes = []
+        for medalist in messages['medalists']:
+            medalist_country_codes.append(country_codes[medalist])
 
     scoreboard_data = []
     for player in players.iterrows():
         scoreboard_data.append(
             players.loc[player[0], :].values.flatten().tolist()
         )
-    return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=len(unplayed_events))
+
+    if 'event' in messages and 'next_event' in messages:
+        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
+    
+    if 'next_event' in messages:
+        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
+    
+    return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=0)
+
 
 def set_players(players_dict: dict):
     '''
@@ -160,7 +195,8 @@ def set_players(players_dict: dict):
                 'Score': 0,
                 'Rank': 0,
                 'Bet On': None,
-                'Bet Amount': 0
+                'Bet Amount': 0,
+                'Net Bet Score': 0,
         }
     current_draft_pick = 0
     random.shuffle(draft_order)
@@ -597,28 +633,11 @@ def read_country_codes(file: str):
         for code in reader:
             country_codes[code[0]] = code[1]
 
-def game_play():
+def game_play(curr_event: str, athletes: list):
     '''
     This function performs the majority of the game play operations
     following league selection.
     '''
-
-    curr_event = random.choice(unplayed_events)
-    unplayed_events.remove(curr_event)
-    athletes = cxn.execute('''
-        SELECT *
-        FROM event_athletes
-        WHERE Event = ?
-        ''',
-        (curr_event,)
-    ).fetchone()
-
-    # removes blank entries if there are only 6 participants
-    if athletes[7] == '' and athletes[8] == '':
-        athletes = list(athletes[1:7])
-    else:
-        athletes = list(athletes[1:])
-
     
     previously_played = True if curr_event in previously_played_events \
         else False
@@ -669,6 +688,25 @@ def game_play():
     # update scoreboard
     update_player_scores(event_medalists)
     return (curr_event, event_medalists)
+
+def get_event_athletes(event: str):
+    print('in get athletes')
+    athletes = cxn.execute('''
+            SELECT *
+            FROM event_athletes
+            WHERE Event = ?
+            ''',
+            (event,)
+        ).fetchone()
+    
+    # removes blank entries if there are only 6 participants
+    if athletes[7] == '' and athletes[8] == '':
+        athletes = list(athletes[1:7])
+    else:
+        athletes = list(athletes[1:])
+    
+    print(athletes)
+    return athletes
 
 def update_game_medals(country: str, medal: str = 'Bronze'):
     '''
@@ -731,8 +769,10 @@ def update_player_scores(medalists: list):
         if bet_on is not None:
             if bet_on == medalists[0]:
                 players.at[index, 'Score'] += players.at[index, 'Bet Amount']
+                players.at[index, 'Net Bet Score'] += players.at[index, 'Bet Amount']
             elif bet_on not in medalists:
                 players.at[index, 'Score'] -= players.at[index, 'Bet Amount']
+                players.at[index, 'Net Bet Score'] -= players.at[index, 'Bet Amount']
 
     
     players.sort_values(
@@ -769,7 +809,8 @@ def reset_game():
             'Score',
             'Rank',
             'Bet On',
-            'Bet Amount'
+            'Bet Amount',
+            'Net Bet Score'
         ]
     )
     game_medal_table = pd.DataFrame(
