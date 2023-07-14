@@ -99,7 +99,9 @@ h1, h2, h3, p, div {
   border-radius: 12px;
   font-size: 16px;
   margin: 8px 5px;
-  border: 2px solid #960018;
+  border: none;
+  outline: 2px solid #960018;
+  outline-offset: -2px;
   background-color: transparent;
 }
 
@@ -107,5 +109,4 @@ h1, h2, h3, p, div {
 .quitGame > button:focus {
   cursor: pointer;
   background-color: #9600183b;
-  outline: none;
 }

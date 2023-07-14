@@ -82,8 +82,6 @@
                             {% endif %}
                         </div>
                     {% endif %}
-                    <h2>{{next_event}}</h2>
-                    <div id="betting-container"></div>
                 </div>
                 <div class="scoreboard">
                     <h2 class="scoreboardTitle">Scoreboard</h2>
@@ -127,8 +125,12 @@
                 </div>
             </div>
             {% if events_left != 0 %}
+                <div id="betting-section">
+                    <h2>Place your bets for {{next_event}}</h2>
+                    <div id="betting-container" class="bettingContainer"></div>
+                </div>
                 <form action="/play-game" id="game_play" method="POST">
-                    <button type="submit" name="submit" value="Play Event" class="continueBtn">CONTINUE</button>
+                    <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>CONTINUE</button>
                 </form>
             {% else %}
                 <form action="/" id="game_play" method="POST" class="endGame">
@@ -149,10 +151,10 @@
             }
         }
 
-        let codes = '{{ flag_codes }}'.replace(
-            /&#39;/g, ''
-        ).replace('[', '').replace(']', '').split(", ");
-        if (codes[0] != '') {
+        if ('{{ flag_codes }}' !== "") {
+            let codes =JSON.parse('{{ flag_codes }}'.replace(
+                /&#39;/g, '"'
+            ));
             setFlag("gold", codes[0]);
             setFlag("silver", codes[1]);
             setFlag("bronze-1", codes[2]);
@@ -160,59 +162,85 @@
                 setFlag("bronze-2", codes[3]);
             }
         }
-        
 
-        let players = '{{ players }}'.replace(
-            /&#39;/g, ''
-        ).replace('[', '').replace(']', '').split(", ");
+        let betCount = 0;
+        let players = [];
 
-        let betCountries = '{{ next_participants }}'.replace(
-            /&#39;/g, ''
-        ).replace('[', '').replace(']', '').split(", ");
+        if ('{{ players }}' !== "") {
+            players = JSON.parse('{{ players }}'.replace(
+                /&#39;/g, '"'
+            ));
 
-        for (player of players) {
-            const form = document.createElement('form');
-            form.setAttribute("id", player)
-            const h3 = document.createElement('h3');
-            h3.innerHTML = `Place your Bet, ${player}`;
-            form.appendChild(h3);
-            for (country of betCountries) {
-                const div = document.createElement('div');
-                const radio = document.createElement('input');
-                radio.setAttribute("type", "radio");
-                radio.setAttribute("id", country);
-                radio.setAttribute("value", country);
-                radio.setAttribute("name", player);
-                const label = document.createElement('label');
-                label.setAttribute("for", country);
-                label.innerText = country;
-                div.appendChild(radio);
-                div.appendChild(label);
-                form.appendChild(div);
+            let betCountries = JSON.parse('{{ next_participants }}'.replace(
+                /&#39;/g, '"'
+            ));
+            console.log(betCountries);
+
+            for (player of players) {
+                const form = document.createElement('form');
+                form.setAttribute("id", `${player}-bet`);
+                form.setAttribute("onsubmit", `return placeBet(${player}, '${player}', 'Placed');`)
+                form.setAttribute("class", "playerBet");
+                const h3 = document.createElement('h3');
+                h3.innerHTML = `${player}`;
+                form.appendChild(h3);
+                const buttonDiv = document.createElement('div');
+                buttonDiv.setAttribute("id", `${player}-radioBtnContainer`);
+                for (country of Object.keys(betCountries)) {
+                    console.log(country);
+                    const div = document.createElement('div');
+                    const radio = document.createElement('input');
+                    radio.setAttribute("type", "radio");
+                    radio.setAttribute("id", `${country}-${player}`);
+                    radio.setAttribute("value", `${country}`);
+                    radio.setAttribute("name", player);
+                    radio.setAttribute("required", "");
+                    const label = document.createElement('label');
+                    label.setAttribute("for", `${country}-${player}`);
+                    label.innerText = betCountries[country] == 1 ? country : `${country} (${betCountries[country]} participants)`;
+                    div.appendChild(radio);
+                    div.appendChild(label);
+                    buttonDiv.appendChild(div);
+                }
+                form.appendChild(buttonDiv);
+                const amount = document.createElement('input');
+                amount.setAttribute("type", "number");
+                amount.setAttribute("id", `${player}-amount`);
+                amount.setAttribute("name", "amount");
+                amount.setAttribute("required", "");
+                amount.setAttribute("oninput", "validateNumber(this)");
+                const placeBet = document.createElement('input');
+                placeBet.setAttribute("type", "submit");
+                placeBet.setAttribute("id", "Place Bet");
+                placeBet.setAttribute("value", "Place Bet");
+                placeBet.setAttribute("class", "placeButton");
+                const noBet = document.createElement('button');
+                noBet.setAttribute("type", "button");
+                noBet.setAttribute("id", "Skip Bet");
+                noBet.setAttribute("value", "Skip Bet");
+                noBet.setAttribute("class", "skipButton");
+                noBet.innerText = "Skip Bet";
+                noBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Skip')`);
+                const btns = document.createElement('div');
+                btns.setAttribute("id", `${player}-bet-buttons`);
+                form.appendChild(amount);
+                btns.appendChild(placeBet);
+                btns.appendChild(noBet);
+                form.appendChild(btns)
+                document.getElementById("betting-container").appendChild(form);
             }
-            const amount = document.createElement('input');
-            amount.setAttribute("type", "text");
-            amount.setAttribute("id", `${player}-amount`);
-            amount.setAttribute("name", "amount");
-            const placeBet = document.createElement('button');
-            placeBet.setAttribute("type", "button");
-            placeBet.setAttribute("id", "Place Bet");
-            placeBet.setAttribute("value", "Place Bet");
-            placeBet.innerText = "Place Bet";
-            placeBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Placed')`)
-            const noBet = document.createElement('button');
-            noBet.setAttribute("type", "button");
-            noBet.setAttribute("id", "Skip Bet");
-            noBet.setAttribute("value", "Skip Bet");
-            noBet.innerText = "Skip Bet";
-            noBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Skip')`)
-            form.appendChild(amount);
-            form.appendChild(placeBet);
-            form.appendChild(noBet);
-            document.getElementById('betting-container').appendChild(form);
         }
 
-        function placeBet(inputNodes, player, type) {
+        function validateNumber(input) {
+            if (input.value < 0) {
+                input.setCustomValidity('The number must be greater than or equal to zero');
+            }
+            else {
+                input.setCustomValidity('');
+            }
+        }
+
+        function placeBet(countryButtons, player, type) {
             let data = [];
             if (type === 'Skip') {
                 data = [
@@ -223,9 +251,9 @@
             }
             else {
                 let country = null;
-                for (node of inputNodes) {
-                    if (node.checked) {
-                        country = node.value;
+                for (countryButton of countryButtons) {
+                    if (countryButton.checked) {
+                        country = countryButton.value;
                         break;
                     }
                 }
@@ -235,7 +263,6 @@
                     {"bet": parseInt(document.getElementById(`${player}-amount`).value)}
                 ];
             }
-            console.log(data);
             $.ajax({
                 type: "POST",
                 url: "/bet",
@@ -243,9 +270,31 @@
                 contentType: "application/json",
                 dataType: 'json',
                 success: function(result) {
-                    const x = 1
+                    if (result.status === "success") {
+                        betCount++;
+                        betText = type === 'Skip' ? "Bet Skipped" : "Bet Placed !"
+                        document.getElementById(`${player}-radioBtnContainer`).innerHTML = 
+                            `<h3>
+                                ${betText}
+                            </h3>`;
+                        document.getElementById(`${player}-amount`).remove();
+                        document.getElementById(`${player}-bet-buttons`).remove();
+                        if (betCount == players.length) {
+                            document.getElementById("continue").removeAttribute("disabled");
+                            document.getElementById("continue").setAttribute("class", "continueBtn");
+                        }
+                    }
+                    else {
+                        console.log(result.msg);
+                        //return validateNumber(document.getElementById(`${player}-amount`));
+                        // document.getElementById(`${player}-amount`).setCustomValidity("ABC", "abc");
+                        return document.getElementById(`${player}-amount`).setCustomValidity("ABdC");
+                    }
                 }
+            }).done(() => {
+                // return validateNumber((`#${player}-amount`)[0]);
             });
+            return false;
         }
     </script>
 </html>

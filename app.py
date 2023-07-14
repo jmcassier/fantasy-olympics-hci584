@@ -51,6 +51,9 @@ def home_page():
     
     if (len(players.index) > 0) or (len(game_medal_table) > 0):
         reset_game()
+
+    global unplayed_events
+    unplayed_events = unplayed_events[0:2];
     
     return render_template('home.html')
 
@@ -143,8 +146,6 @@ def play_game():
                 session['messages'] = {"event": event_results[0], "medalists": event_results[1]}    
         
         else:
-            if (request.form.get("submit") is not None) and (request.form["submit"] == "Draft Team"):
-                print("END DRAFT !!!")
             session['messages'] = {"next_event": session['messages']['next_event'], "next_participants": session['messages']['next_participants']}
 
         return redirect(url_for('play_game'))
@@ -167,10 +168,11 @@ def play_game():
         )
 
     if 'event' in messages and 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'], players=draft_order)
+        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=participant_count_by_country(messages['next_participants']), players=draft_order)
     
     if 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'], players=draft_order)
+
+        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=participant_count_by_country(messages['next_participants']), players=draft_order)
     
     return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=0)
 
@@ -644,17 +646,21 @@ def set_bet():
         players['Name'] == player
     ][0]
 
-    if country is "None":
+    if country == "None":
         players.at[player_index, 'Bet On'] = None
         players.at[player_index, 'Bet Amount'] = 0
+        return jsonify({"status": "success"})
     
-    else:
-        players.at[player_index, 'Bet On'] = country
-        players.at[player_index, 'Bet Amount'] = bet
-
+    if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
+        return jsonify({"status": "error", "msg": "You may only bet 1 point if your score is less than or equal to 0"})
+    
+    if players.at[player_index, 'Score'] < bet and (players.at[player_index, 'Score'] > 0):
+        return jsonify({"status": "error", "msg": "Bet is higher than your current score"})
+    
+    players.at[player_index, 'Bet On'] = country
+    players.at[player_index, 'Bet Amount'] = bet
     print(players)
-    results = {"resp": True}
-    return jsonify(results)
+    return jsonify({"status": "success"})
 
 def game_play(curr_event: str, athletes: list):
     '''
@@ -712,8 +718,17 @@ def game_play(curr_event: str, athletes: list):
     update_player_scores(event_medalists)
     return (curr_event, event_medalists)
 
+def participant_count_by_country(participants: list):
+    participant_count = {}
+    sorted_participants = sorted(participants)
+    
+    for participant in sorted_participants:
+        if participant not in participant_count:
+            participant_count[participant] = sorted_participants.count(participant)
+    
+    return participant_count
+
 def get_event_athletes(event: str):
-    print('in get athletes')
     athletes = cxn.execute('''
             SELECT *
             FROM event_athletes
@@ -727,8 +742,7 @@ def get_event_athletes(event: str):
         athletes = list(athletes[1:7])
     else:
         athletes = list(athletes[1:])
-    
-    print(athletes)
+
     return athletes
 
 def update_game_medals(country: str, medal: str = 'Bronze'):

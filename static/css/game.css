@@ -177,20 +177,77 @@ h1, h2, h3, p, div {
   flex-direction: row;
 }
 
-.quitGame > button {
+.quitGame > button,
+.skipButton {
   color: #960018;
   font-weight: 600;
   padding: 9px 15px;
   border-radius: 12px;
   font-size: 16px;
   margin: 8px 5px;
-  border: 2px solid #960018;
+  border: none;
+  outline: 2px solid #960018;
+  outline-offset: -2px;
   background-color: transparent;
 }
 
 .quitGame > button:hover,
-.quitGame > button:focus {
+.quitGame > button:focus,
+.skipButton:hover,
+.skipButton:focus {
   cursor: pointer;
   background-color: #9600183b;
+}
+
+.disabled {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: grey;
+}
+
+.bettingContainer {
+  display: flex;
+  flex-direction: row;
+  column-gap: 48px;
+  row-gap: 48px;
+  flex-wrap: wrap;
+}
+
+.playerBet {
+  box-shadow: 10px 10px 10px #d7d7d7;
+  background-color: #F8F8FF;
+  border-radius: 12px;
+  padding: 16px 24px;
+  width: 225px;
+  height: 340px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+}
+
+.placeButton {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  background-color: #329932;
+}
+
+.placeButton:hover,
+.placeButton:focus {
+  cursor: pointer;
+  background-color: #008000;
   outline: none;
+}
+
+h3 {
+  margin: 0;
 }
