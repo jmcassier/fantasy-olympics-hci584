@@ -27,6 +27,8 @@
         let countries = '{{ available_countries }}'.replace(
             /&#39;/g, ''
         ).replace( '[', '').replace(']', '').split(", ");
+        console.log(countries);
+        countries = countries.sort((c1, c2) => c1 - c2);
         let codes = '{{ country_codes }}'.replace(
             /&#39;/g, ''
         ).replace('[', '').replace(']', '').split(", ");

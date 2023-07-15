@@ -431,6 +431,12 @@ def database_creation():
             tiers['D'].append(row[0])
         elif avg >= 13:
             tiers['E'].append(row[0])
+    
+    tiers['A'].sort();
+    tiers['B'].sort();
+    tiers['C'].sort();
+    tiers['D'].sort();
+    tiers['E'].sort();
 
     # create event_athletes if not in the database
     if event_athletes_exists == []:
