@@ -176,7 +176,6 @@ def play_game():
     
     return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=0)
 
-
 def set_players(players_dict: dict):
     '''
     Add the players to the players dataframe and determine the number
@@ -638,7 +637,7 @@ def read_country_codes(file: str):
 @app.route('/bet', methods = ["POST"])
 def set_bet():
     data = request.get_json()
-    country = data[0]['country']
+    fn = data[0]['function']
     player = data[1]['player']
     bet = data[2]['bet']
 
@@ -646,16 +645,25 @@ def set_bet():
         players['Name'] == player
     ][0]
 
+    if fn == "Validate":
+        if bet is None:
+            return jsonify({"status": "error", "msg": "Please fill out this field."})
+        if bet <= 0: 
+            return jsonify({"status": "error", "msg": "Your bet must be greater than 0."})
+        
+        if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
+            return jsonify({"status": "error", "msg": "You may only bet 1 point if your score is less than or equal to 0."})
+    
+        if players.at[player_index, 'Score'] < bet and (players.at[player_index, 'Score'] > 0):
+            return jsonify({"status": "error", "msg": "Your bet may not be higher than your current score."})
+        
+        return jsonify({"status": "success"})
+    
+    country = data[3]['country']
     if country == "None":
         players.at[player_index, 'Bet On'] = None
         players.at[player_index, 'Bet Amount'] = 0
         return jsonify({"status": "success"})
-    
-    if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
-        return jsonify({"status": "error", "msg": "You may only bet 1 point if your score is less than or equal to 0"})
-    
-    if players.at[player_index, 'Score'] < bet and (players.at[player_index, 'Score'] > 0):
-        return jsonify({"status": "error", "msg": "Bet is higher than your current score"})
     
     players.at[player_index, 'Bet On'] = country
     players.at[player_index, 'Bet Amount'] = bet

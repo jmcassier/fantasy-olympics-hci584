@@ -83,45 +83,63 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="scoreboard">
-                    <h2 class="scoreboardTitle">Scoreboard</h2>
-                    {% for row in scoreboard %}
-                        <div class="playerScore">
-                            {% if row[3] == 1 %}
-                                <div class="scoreboardRank gold">
-                                    {{row[3]}}
+                <div id="scoreboard-section">
+                    <div role="tablist">
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('collapse')"
+                        >
+                            Collapse Players
+                        </button>
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('expand')"
+                        >
+                            Expand Players
+                        </button>
+                    </div>
+                    <div id="player-scores" class="scoreboard">
+                        <h2 class="scoreboardTitle">Scoreboard</h2>
+                        {% for row in scoreboard %}
+                            <div class="playerScore">
+                                {% if row[3] == 1 %}
+                                    <div class="scoreboardRank gold">
+                                        {{row[3]}}
+                                    </div>
+                                {% elif row[3] == 2 %}
+                                    <div class="scoreboardRank silver">
+                                        {{row[3]}}
+                                    </div>
+                                {% elif row[3] == 3 %}
+                                    <div class="scoreboardRank bronze">
+                                        {{row[3]}}
+                                    </div>
+                                {% else %}
+                                    <div class="scoreboardRank">
+                                        {{row[3]}}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    {{row[0]}}
                                 </div>
-                            {% elif row[3] == 2 %}
-                                <div class="scoreboardRank silver">
-                                    {{row[3]}}
+                                <div>
+                                    {{row[2]}}
                                 </div>
-                            {% elif row[3] == 3 %}
-                                <div class="scoreboardRank bronze">
-                                    {{row[3]}}
-                                </div>
-                            {% else %}
-                                <div class="scoreboardRank">
-                                    {{row[3]}}
-                                </div>
-                            {% endif %}
-                            <div>
-                                {{row[0]}}
                             </div>
-                            <div class="countries" hidden>
-                                {{row[1][0]}}
-                                {{row[1][1]}}
-                                {{row[1][2]}}
-                                {{row[1][3]}}
-                                {{row[1][4]}}
-                                {{row[1][5]}}
-                                {{row[1][6]}}
-                                {{row[1][7]}}
+                            <div name="expanded-view" class="countries" hidden>
+                                <div>{{row[1][0]}}</div>
+                                <div>{{row[1][1]}}</div>
+                                <div>{{row[1][2]}}</div>
+                                <div>{{row[1][3]}}</div>
+                                <div>{{row[1][4]}}</div>
+                                <div>{{row[1][5]}}</div>
+                                <div>{{row[1][6]}}</div>
+                                <div>{{row[1][7]}}</div>
                             </div>
-                            <div>
-                                {{row[2]}}
-                            </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             {% if events_left != 0 %}
@@ -163,18 +181,32 @@
             }
         }
 
+        function toggleView(status) {
+            const leagues = document.getElementsByName("expanded-view");
+            if (status === "expand") {
+                for (league of leagues) {
+                    league.hidden = false;
+                    console.log(league.hidden);
+                }
+            }
+            else {
+                for (league of leagues) {
+                    league.hidden = true;
+                }
+            }
+            console.log(leagues);
+        }
         let betCount = 0;
         let players = [];
 
         if ('{{ players }}' !== "") {
             players = JSON.parse('{{ players }}'.replace(
                 /&#39;/g, '"'
-            ));
+            )).sort((c1, c2) => c1 - c2);
 
             let betCountries = JSON.parse('{{ next_participants }}'.replace(
                 /&#39;/g, '"'
-            ));
-            console.log(betCountries);
+            ))
 
             for (player of players) {
                 const form = document.createElement('form');
@@ -187,7 +219,6 @@
                 const buttonDiv = document.createElement('div');
                 buttonDiv.setAttribute("id", `${player}-radioBtnContainer`);
                 for (country of Object.keys(betCountries)) {
-                    console.log(country);
                     const div = document.createElement('div');
                     const radio = document.createElement('input');
                     radio.setAttribute("type", "radio");
@@ -208,7 +239,7 @@
                 amount.setAttribute("id", `${player}-amount`);
                 amount.setAttribute("name", "amount");
                 amount.setAttribute("required", "");
-                amount.setAttribute("oninput", "validateNumber(this)");
+                amount.setAttribute("oninput", `validateNumber(this, '${player}')`);
                 const placeBet = document.createElement('input');
                 placeBet.setAttribute("type", "submit");
                 placeBet.setAttribute("id", "Place Bet");
@@ -231,36 +262,54 @@
             }
         }
 
-        function validateNumber(input) {
-            if (input.value < 0) {
-                input.setCustomValidity('The number must be greater than or equal to zero');
-            }
-            else {
-                input.setCustomValidity('');
-            }
+        function validateNumber(input, name) {
+            data = [
+                {"function": "Validate"},
+                {"player": player},
+                {"bet": parseInt(document.getElementById(`${player}-amount`).value)}
+            ];
+            $.ajax({
+                type: "POST",
+                url: "/bet",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: 'json',
+                success: (result) => {
+                    if (result.status === "success") {
+                        input.setCustomValidity("")
+                    }
+                    else {
+                        input.setCustomValidity(result.msg);
+                    }
+                }
+            })
         }
 
         function placeBet(countryButtons, player, type) {
             let data = [];
             if (type === 'Skip') {
                 data = [
-                    {"country": "None"},
+                    {"function": "PlaceBet"},
                     {"player": player},
-                    {"bet": 0}
+                    {"bet": 0},
+                    {"country": "None"}
                 ];
             }
             else {
-                let country = null;
-                for (countryButton of countryButtons) {
-                    if (countryButton.checked) {
-                        country = countryButton.value;
-                        break;
-                    }
-                }
+                let country = Array.from(countryButtons).filter((countryButton) => {countryButton.checked})[0].value;
+                // alert("error");
+                // console.log(x);
+                // for (countryButton of countryButtons) {
+                //     if (countryButton.checked) {
+                //         country = countryButton.value;
+                //         break;
+                //     }
+                // }
                 data = [
-                    {"country": country},
+                    {"function": "PlaceBet"},
                     {"player": player},
-                    {"bet": parseInt(document.getElementById(`${player}-amount`).value)}
+                    {"bet": parseInt(document.getElementById(`${player}-amount`).value)},
+                    {"country": country}
                 ];
             }
             $.ajax({
@@ -269,7 +318,7 @@
                 data: JSON.stringify(data),
                 contentType: "application/json",
                 dataType: 'json',
-                success: function(result) {
+                success: (result) => {
                     if (result.status === "success") {
                         betCount++;
                         betText = type === 'Skip' ? "Bet Skipped" : "Bet Placed !"
@@ -284,16 +333,8 @@
                             document.getElementById("continue").setAttribute("class", "continueBtn");
                         }
                     }
-                    else {
-                        console.log(result.msg);
-                        //return validateNumber(document.getElementById(`${player}-amount`));
-                        // document.getElementById(`${player}-amount`).setCustomValidity("ABC", "abc");
-                        return document.getElementById(`${player}-amount`).setCustomValidity("ABdC");
-                    }
                 }
-            }).done(() => {
-                // return validateNumber((`#${player}-amount`)[0]);
-            });
+            })
             return false;
         }
     </script>
