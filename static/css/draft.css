@@ -110,3 +110,14 @@ h1, h2, h3, p, div {
   cursor: pointer;
   background-color: #9600183b;
 }
+
+.disabled {
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  background-color: grey;
+  width: 100%;
+}

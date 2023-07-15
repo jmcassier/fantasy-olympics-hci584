@@ -109,18 +109,21 @@ def draft_page():
             if country_codes[country] not in avail_country_codes:
                 avail_country_codes.append(country_codes[country])
 
+        player_league = players[players['Name'] == draft_order[current_draft_pick]]["League"].item()
         if "error_message" in session["messages"]:
             return render_template('draft.html',
                                    player=draft_order[current_draft_pick], 
                                    available_countries=tiers[draft_round[1]], 
                                    country_codes=avail_country_codes,
                                    round=draft_round[0],
+                                   league=player_league,
                                    error=session["messages"]["error_message"])
         
         return render_template('draft.html', 
                                player=draft_order[current_draft_pick],
                                available_countries=tiers[draft_round[1]],
                                country_codes=avail_country_codes,
+                               league=player_league,
                                round=draft_round[0])
 
 
