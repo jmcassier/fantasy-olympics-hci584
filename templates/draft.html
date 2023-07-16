@@ -17,18 +17,19 @@
                         {% if league[1] == [] %}
                             <div class="leagueContainer">
                                 <h3>{{ league[0] }}</h3>
+                                <hr>
                                 <div>No teams in your league yet!</div>
                             </div>
                         {% else %}
-                        <div class="leagueContainer">
-                            <h3>{{ league[0] }}</h3>
-                            <hr>
-                            <div>
-                                {% for country in league[1] %}
-                                    <div>{{ country }}</div>
-                                {% endfor %}
+                            <div class="leagueContainer">
+                                <h3>{{ league[0] }}</h3>
+                                <hr>
+                                <div>
+                                    {% for country in league[1] %}
+                                        <div>{{ country }}</div>
+                                    {% endfor %}
+                                </div>
                             </div>
-                        </div>
                         {% endif %}
                     {% endfor %}
                 </div>
