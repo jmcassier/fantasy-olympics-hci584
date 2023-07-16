@@ -110,20 +110,24 @@ def draft_page():
                 avail_country_codes.append(country_codes[country])
 
         player_league = players[players['Name'] == draft_order[current_draft_pick]]["League"].item()
+        leagues = players[["Name", "League"]].values.tolist()
+        print(leagues)
         if "error_message" in session["messages"]:
             return render_template('draft.html',
                                    player=draft_order[current_draft_pick], 
                                    available_countries=tiers[draft_round[1]], 
                                    country_codes=avail_country_codes,
                                    round=draft_round[0],
-                                   league=player_league,
+                                   curr_league=player_league,
+                                   all_leagues=leagues,
                                    error=session["messages"]["error_message"])
         
         return render_template('draft.html', 
                                player=draft_order[current_draft_pick],
                                available_countries=tiers[draft_round[1]],
                                country_codes=avail_country_codes,
-                               league=player_league,
+                               curr_league=player_league,
+                               all_leagues=leagues,
                                round=draft_round[0])
 
 

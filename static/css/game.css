@@ -50,6 +50,11 @@ h1, h2, h3, p, div {
   width: fit-content;
 }
 
+.pageContent {
+  display: grid;
+  grid-template-columns: 2fr, 1fr;
+}
+
 .mainContainer {
   line-height: 1.5;
   text-align: left;
@@ -58,6 +63,10 @@ h1, h2, h3, p, div {
   margin-left: auto;
   margin-right: auto;
   display: block;
+}
+
+.sidebar {
+  /* display: flex */
 }
 
 .gameData {

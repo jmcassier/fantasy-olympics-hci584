@@ -7,19 +7,45 @@
             href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
         />
     </head>
-    <body style="min-width: 875px">
-        <div class="mainContainer">
-            <div class="header">
-                <form action="/" id="game_play" method="POST" class="quitGame">
-                    <button type="submit">Quit Game</button>
-                </form>
-                <h1 class="title"> Draft: Round {{ round }} </h1>
+    <body style="min-width: 950px; margin: 0;">
+        {% include "header.html" %}
+        <div id="page-container" class="pageContent">
+            <div id="sidebar" class="sidebar"">
+                <h2>Current Leagues</h3>
+                <div>
+                    {% for league in all_leagues %}
+                        {% if league[1] == [] %}
+                            <div class="leagueContainer">
+                                <h3>{{ league[0] }}</h3>
+                                <div>No teams in your league yet!</div>
+                            </div>
+                        {% else %}
+                        <div class="leagueContainer">
+                            <h3>{{ league[0] }}</h3>
+                            <hr>
+                            <div>
+                                {% for country in league[1] %}
+                                    <div>{{ country }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
             </div>
-            <h2>
-                {{ player }}, select a team
-            </h2>
-            <div class="errorMsg">{{ error }}</div>
-            <form class="form" action="/draft" id="league-selection" method="POST"></form>
+            <div class="mainContainer">
+                <div class="header">
+                    <h2 class="title"> Draft: Round {{ round }} </h2>
+                    <form action="/" id="game_play" method="POST" class="quitGame">
+                        <button type="submit">Quit Game</button>
+                    </form>
+                </div>
+                <h2>
+                    {{ player }}, select a team
+                </h2>
+                <div class="errorMsg">{{ error }}</div>
+                <form class="form" action="/draft" id="league-selection" method="POST"></form>
+            </div>
         </div>
     </body>
 
@@ -38,7 +64,7 @@
         );
         countries = Array.from(new Set(countries));
 
-        const league =  '{{ league }}'.replace(
+        const league =  '{{ curr_league }}'.replace(
             /&#39;/g, ''
         ).replace( '[', '').replace(']', '').split(", ");
         for (let i = 0; i < countries.length; i++) {

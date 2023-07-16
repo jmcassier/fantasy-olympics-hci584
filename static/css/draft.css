@@ -1,23 +1,71 @@
 .title {
-  text-align: center;
   color: #002F6C;
-  margin-top: 24px;
+  margin-top: 6px;
   margin-bottom: 0;
-  font-size: 52px;
+  font-size: 32px;
 }
   
 h1, h2, h3, p, div {
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.pageContent {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  height: calc(100% - 118px);
 }
   
 .mainContainer {
   line-height: 1.5;
   text-align: left;
   width: calc(100% - 104px);
-  max-width: 1050px;
   margin-left: auto;
   margin-right: auto;
   display: block;
+}
+
+.sidebar {
+  background-color: #002F6C;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 40px;
+  padding: 20px 0;
+  overflow: auto;
+}
+
+.sidebar > div { 
+  display: flex;
+  flex-direction: column;
+  row-gap: 40px;
+  overflow: auto;
+  padding: 0 20px;
+  width: calc(100% - 80px);
+}
+
+.sidebar > h2 {
+  color: white;
+  align-items: center;
+  margin: 20px 0 0 0;
+}
+
+.leagueContainer {
+  border-radius: 16px;
+  background-color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.leagueContainer > h3 {
+  margin: 0 5px;
+}
+
+.leagueContainer > div {
+  margin: 0 5px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
 }
 
 .flag {
@@ -52,7 +100,7 @@ h1, h2, h3, p, div {
 .countrySelect {
   display: flex;
   flex-direction: column;
-  padding: 20px 20px;
+  padding: 20px;
   border: none;
   border-radius: 16px;
   align-items: center;
@@ -63,12 +111,18 @@ h1, h2, h3, p, div {
   width: 150px;
 }
 
+hr {
+  height: 2px;
+  border-width: 0;
+  width: 100%;
+  background-color: #002F6C;
+}
+
 .form {
   display: flex;
   flex-wrap: wrap;
   column-gap: 48px;
   row-gap: 48px;
-  justify-content: center;
   margin-top: 28px;
 }
 
@@ -78,18 +132,19 @@ h1, h2, h3, p, div {
 
 .header {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  direction: rtl;
+  grid-template-columns: 3fr 1fr;
   width: 100%;
+  align-items: center;
+  height: 78px;
 }
 
 .quitGame{
   display: flex;
   height: 78px;
-  margin-top: 24px;
   margin-bottom: 0;
   align-items: center;
   flex-direction: row;
+  direction: rtl;
 }
 
 .quitGame > button {
@@ -105,8 +160,7 @@ h1, h2, h3, p, div {
   background-color: transparent;
 }
 
-.quitGame > button:hover,
-.quitGame > button:focus {
+.quitGame > button:hover {
   cursor: pointer;
   background-color: #9600183b;
 }
@@ -120,4 +174,18 @@ h1, h2, h3, p, div {
   font-size: 16px;
   background-color: grey;
   width: 100%;
+}
+
+
+.sidebar > div::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar > div::-webkit-scrollbar-track {
+  background: none;
+}
+ 
+.sidebar > div::-webkit-scrollbar-thumb {
+  border-radius: 16px;
+  background: white;
 }

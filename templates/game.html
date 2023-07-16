@@ -11,150 +11,156 @@
         />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
-    <body style="min-width: 1176px">
-        <div class="mainContainer">
-            {% if events_left != 0 %}
-                <div class="header">
-                    <form action="/" id="game_play" method="POST" class="quitGame">
-                        <button type="submit">Quit Game</button>
-                    </form>
+    <body style="min-width: 1176px; margin: 0;">
+        {% include "header.html" %}
+        <div id="page-container" class="pageContent">
+            <div id="main-container" class="mainContainer">
+                {% if events_left != 0 %}
+                    <div class="header">
+                        <form action="/" id="game_play" method="POST" class="quitGame">
+                            <button type="submit">Quit Game</button>
+                        </form>
+                        <h1 class="title"> GAME PLAY </h1>
+                    </div>
+                    <h2>
+                        Events Left: {{events_left}}
+                    </h2>
+                {% else %}
                     <h1 class="title"> GAME PLAY </h1>
-                </div>
-                <h2>
-                    Events Left: {{events_left}}
-                </h2>
-            {% else %}
-                <h1 class="title"> GAME PLAY </h1>
-                <h2> Game Over </h2>
-            {% endif %}
-            <div class="gameData">
-                <div class="podium">
-                    {% if medalists %}
-                        <h2>
-                            {{event}}
-                        </h2>
-                        <div class="medalists">
-                            <div class="medalist silver" style="transform: translateY(-25px)">
-                                <span id="silver-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[1]}}
-                                    </div>
-                                    <div>
-                                        2
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="medalist gold" style="transform: translateY(-50px)">
-                                <span id="gold-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[0]}}
-                                    </div>
-                                    <div>
-                                        1
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="medalist bronze">
-                                <span id="bronze-1-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[2]}}
-                                    </div>
-                                    <div>
-                                        3
-                                    </div>
-                                </div>
-                            </div>
-                            {% if medalists[3] != null %}
-                                <div class="medalist bronze">
-                                    <span id="bronze-2-flag"></span>
+                    <h2> Game Over </h2>
+                {% endif %}
+                <div class="gameData">
+                    <div class="podium">
+                        {% if medalists %}
+                            <h2>
+                                {{event}}
+                            </h2>
+                            <div class="medalists">
+                                <div class="medalist silver" style="transform: translateY(-25px)">
+                                    <span id="silver-flag"></span>
                                     <div>
                                         <div>
-                                            {{medalists[3]}}
+                                            {{medalists[1]}}
+                                        </div>
+                                        <div>
+                                            2
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="medalist gold" style="transform: translateY(-50px)">
+                                    <span id="gold-flag"></span>
+                                    <div>
+                                        <div>
+                                            {{medalists[0]}}
+                                        </div>
+                                        <div>
+                                            1
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="medalist bronze">
+                                    <span id="bronze-1-flag"></span>
+                                    <div>
+                                        <div>
+                                            {{medalists[2]}}
                                         </div>
                                         <div>
                                             3
                                         </div>
                                     </div>
                                 </div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div id="scoreboard-section">
-                    <div role="tablist">
-                        <button
-                            role="tab"
-                            type="button"
-                            onClick="toggleView('collapse')"
-                        >
-                            Collapse Players
-                        </button>
-                        <button
-                            role="tab"
-                            type="button"
-                            onClick="toggleView('expand')"
-                        >
-                            Expand Players
-                        </button>
-                    </div>
-                    <div id="player-scores" class="scoreboard">
-                        <h2 class="scoreboardTitle">Scoreboard</h2>
-                        {% for row in scoreboard %}
-                            <div class="playerScore">
-                                {% if row[3] == 1 %}
-                                    <div class="scoreboardRank gold">
-                                        {{row[3]}}
-                                    </div>
-                                {% elif row[3] == 2 %}
-                                    <div class="scoreboardRank silver">
-                                        {{row[3]}}
-                                    </div>
-                                {% elif row[3] == 3 %}
-                                    <div class="scoreboardRank bronze">
-                                        {{row[3]}}
-                                    </div>
-                                {% else %}
-                                    <div class="scoreboardRank">
-                                        {{row[3]}}
+                                {% if medalists[3] != null %}
+                                    <div class="medalist bronze">
+                                        <span id="bronze-2-flag"></span>
+                                        <div>
+                                            <div>
+                                                {{medalists[3]}}
+                                            </div>
+                                            <div>
+                                                3
+                                            </div>
+                                        </div>
                                     </div>
                                 {% endif %}
-                                <div>
-                                    {{row[0]}}
-                                </div>
-                                <div>
-                                    {{row[2]}}
-                                </div>
                             </div>
-                            <div name="expanded-view" class="countries" hidden>
-                                <div>{{row[1][0]}}</div>
-                                <div>{{row[1][1]}}</div>
-                                <div>{{row[1][2]}}</div>
-                                <div>{{row[1][3]}}</div>
-                                <div>{{row[1][4]}}</div>
-                                <div>{{row[1][5]}}</div>
-                                <div>{{row[1][6]}}</div>
-                                <div>{{row[1][7]}}</div>
-                            </div>
-                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div id="scoreboard-section">
+                        <div role="tablist">
+                            <button
+                                role="tab"
+                                type="button"
+                                onClick="toggleView('collapse')"
+                            >
+                                Collapse Players
+                            </button>
+                            <button
+                                role="tab"
+                                type="button"
+                                onClick="toggleView('expand')"
+                            >
+                                Expand Players
+                            </button>
+                        </div>
+                        <div id="player-scores" class="scoreboard">
+                            <h2 class="scoreboardTitle">Scoreboard</h2>
+                            {% for row in scoreboard %}
+                                <div class="playerScore">
+                                    {% if row[3] == 1 %}
+                                        <div class="scoreboardRank gold">
+                                            {{row[3]}}
+                                        </div>
+                                    {% elif row[3] == 2 %}
+                                        <div class="scoreboardRank silver">
+                                            {{row[3]}}
+                                        </div>
+                                    {% elif row[3] == 3 %}
+                                        <div class="scoreboardRank bronze">
+                                            {{row[3]}}
+                                        </div>
+                                    {% else %}
+                                        <div class="scoreboardRank">
+                                            {{row[3]}}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        {{row[0]}}
+                                    </div>
+                                    <div>
+                                        {{row[2]}}
+                                    </div>
+                                </div>
+                                <div name="expanded-view" class="countries" hidden>
+                                    <div>{{row[1][0]}}</div>
+                                    <div>{{row[1][1]}}</div>
+                                    <div>{{row[1][2]}}</div>
+                                    <div>{{row[1][3]}}</div>
+                                    <div>{{row[1][4]}}</div>
+                                    <div>{{row[1][5]}}</div>
+                                    <div>{{row[1][6]}}</div>
+                                    <div>{{row[1][7]}}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
+                {% if events_left != 0 %}
+                    <div id="betting-section">
+                        <h2>Place your bets for {{next_event}}</h2>
+                        <div id="betting-container" class="bettingContainer"></div>
+                    </div>
+                    <form action="/play-game" id="game_play" method="POST">
+                        <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>CONTINUE</button>
+                    </form>
+                {% else %}
+                    <form action="/" id="game_play" method="POST" class="endGame">
+                        <button type="submit">End Game</button>
+                    </form>
+                {% endif %}
             </div>
-            {% if events_left != 0 %}
-                <div id="betting-section">
-                    <h2>Place your bets for {{next_event}}</h2>
-                    <div id="betting-container" class="bettingContainer"></div>
-                </div>
-                <form action="/play-game" id="game_play" method="POST">
-                    <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>CONTINUE</button>
-                </form>
-            {% else %}
-                <form action="/" id="game_play" method="POST" class="endGame">
-                    <button type="submit">End Game</button>
-                </form>
-            {% endif %}
+            <div id="sidebar" class="sidebar">
+                SIDEBAR
+            </div>
         </div>
     </body>
     <script type="text/javascript">

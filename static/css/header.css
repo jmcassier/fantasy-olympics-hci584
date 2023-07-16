@@ -1,0 +1,24 @@
+.rings1 {
+  height: 70px;
+  display: block;
+  margin: 24px 0;
+}
+
+.header1 {
+  display: flex;
+  flex-direction: row;
+  background-color: #a9a9a9;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  column-gap: 40px;
+}
+
+.title1 {
+    text-align: center;
+    color: #002F6C;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 52px;
+    margin: 24px 0;
+  }
