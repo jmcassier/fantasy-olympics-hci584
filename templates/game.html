@@ -61,33 +61,28 @@
                                 {{row[3]}}
                             </div>
                             {% endif %}
-                            <div>
-                                {{row[0]}}
-                            </div>
-                            <div>
-                                {{row[2]}}
-                            </div>
+                            <div> {{row[0]}} </div>
+                            <div> {{row[2]}} </div>
                         </div>
                         <div name="expanded-view" hidden>
                             <hr>
                             {% for country in row[1] %}
-                            <div name="expanded-country" class="playerScore" style="direction: rtl; text-align: left">
-                                <div> 
-                                    <div name="{{country}}-score"></div>
-                                </div>
-                                <div>
-                                    <div>{{country}}</div>
-                                </div>
+                            <div 
+                                name="expanded-country" 
+                                class="playerScore" 
+                                style="direction: rtl; text-align: left"
+                            >
+                                <div name="{{country}}-score"></div>
+                                <div>{{country}}</div>
                             </div>
                             {% endfor %}
-                            <div name="expanded-country" class="playerScore" style="direction: rtl; text-align: left">
-                                <div>
-                                    
-                                    <div style="direction: ltr; ">{{row[6]}}</div>
-                                </div>
-                                <div>
-                                    <div>Net Bet Score</div>
-                                </div>
+                            <div 
+                                name="expanded-country" 
+                                class="playerScore" 
+                                style="direction: rtl; text-align: left"
+                            >
+                                <div style="direction: ltr; ">{{row[6]}}</div>
+                                <div>Net Bet Score</div>
                             </div>
                         </div>
                     </div>
@@ -172,7 +167,17 @@
                     </div>
                 </div>
                 <form action="/play-game" id="game_play" method="POST">
-                    <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>Continue</button>
+                    <input type="hidden" id="scoreboardView" name="scoreboardView" value="{{scoreboard_view}}">
+                    <button 
+                        id="continue" 
+                        type="submit"
+                        name="submit" 
+                        value="Play Event" 
+                        class="disabled"
+                        disabled
+                    >
+                        Continue
+                    </button>
                 </form>
                 {% endif %}
             </div>
@@ -206,6 +211,9 @@
             const leagues = document.getElementsByName("expanded-view");
             const expandButton = document.getElementById("expand-button");
             const collapseButton = document.getElementById("collapse-button");
+            if('{{events_left}}' != 0) {
+                document.getElementById("scoreboardView").setAttribute("value", status);
+            }
             if (status === "expand") {
                 expandButton.setAttribute("class", "activePillButton left");
                 expandButton.setAttribute("disabled", "");
@@ -225,6 +233,8 @@
                 }
             }
         }
+
+        toggleView('{{scoreboard_view}}');
         
         let betCount = 0;
         let players = [];
@@ -247,7 +257,12 @@
 
             let betCountries = JSON.parse('{{ next_participants }}'.replace(
                 /&#39;/g, '"'
-            ));
+            ).replace("Cote d-Ivoire", "Cote d'Ivoire"));
+
+            if (Object.keys(betCountries).includes("Cote d-Ivoire")) {
+                betCountries["Cote d'Ivoire"] = betCountries["Cote d-Ivoire"];
+                delete betCountries["Cote d-Ivoire"];
+            }
 
             for (player of players) {
                 const betForm = document.createElement('form');
@@ -269,7 +284,7 @@
                     radioBtn.setAttribute("required", "");
                     const label = document.createElement('label');
                     label.setAttribute("for", `${country}-${player}`);
-                    label.innerText = betCountries[country] == 1 ? country : `${country} (${betCountries[country]} participants)`;
+                    label.innerText = betCountries[country] == 1 ? country : `${country} (${betCountries[country]} athletes)`;
                     radioBtnWrapper.appendChild(radioBtn);
                     radioBtnWrapper.appendChild(label);
                     radioButtons.appendChild(radioBtnWrapper);
