@@ -1,0 +1,103 @@
+:root {
+  --blue: #002F6C;
+  --blue-hover: #001939;
+  --blue-transparent-hover: #002f6c2e;
+  --green: #329932;
+  --green-hover: #008000;
+  --red: #960018;
+  --red-hover: #58000f;
+  --red-transparent-hover: #9600183b;
+  --light-grey: #d7d7d7;
+  --dark-grey: #a9a9a9;
+  --bronze: #cd7f32;
+  --off-white: #f8f8ff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.title {
+  color: var(--blue);
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: 32px;
+}
+
+.mainContainer {
+  line-height: 1.5;
+  text-align: left;
+  width: calc(100% - 104px);
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.pageContent {
+  display: grid;
+  grid-template-columns: 392px auto;
+  height: calc(100% - 118px);
+}
+
+.sidebar {
+  background-color: var(--blue);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 40px;
+  padding: 20px 0;
+  overflow: auto;
+}
+
+.sidebar > div::-webkit-scrollbar {
+  width: 8px;
+}
+  
+.sidebar > div::-webkit-scrollbar-track {
+  background: none;
+}
+   
+.sidebar > div::-webkit-scrollbar-thumb {
+  border-radius: 16px;
+  background: white;
+}
+
+.quitGame,
+.endGame {
+  display: flex;
+  height: 78px;
+  margin-bottom: 0;
+  align-items: center;
+  flex-direction: row;
+  direction: rtl;
+}
+
+.quitGame > button,
+.skipButton {
+  color: var(--red);
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  margin: 8px 5px;
+  border: none;
+  outline: 2px solid var(--red);
+  outline-offset: -2px;
+  background-color: transparent;
+}
+
+.quitGame > button:hover,
+.quitGame > button:focus,
+.skipButton:hover,
+.skipButton:focus {
+  cursor: pointer;
+  background-color: var(--red-transparent-hover);
+}
+
+.disabled {
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 12px;
+    font-size: 16px;
+    margin: 8px 5px;
+    background-color: grey;
+  }
