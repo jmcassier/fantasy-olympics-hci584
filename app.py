@@ -49,10 +49,7 @@ def home_page():
         redirect(url_for('home_page'))
     
     if (len(players.index) > 0) or (len(game_medal_table) > 0):
-        reset_game()
-
-    global unplayed_events
-    unplayed_events = unplayed_events[0:2]
+        end_game()
     
     return render_template('home.html')
 
@@ -87,7 +84,10 @@ def draft_page():
                 next_event = random.choice(unplayed_events)
                 unplayed_events.remove(next_event)
                 athletes = get_event_athletes(next_event)
-                session['messages'] = {"next_event": next_event, "next_participants": athletes}
+                session['messages'] = {
+                    "next_event": next_event, 
+                    "next_participants": athletes
+                }
                 draft_order.sort()
                 return redirect(url_for('play_game'), 307)
             session["messages"] = {}
@@ -96,7 +96,9 @@ def draft_page():
             # submitted multiple times if reloaded
             return redirect(url_for('draft_page')) 
         
-        session["messages"] = {"error_message": "You have already selected this country. Please select a different country"}
+        session["messages"] = {
+            "error_message": "You have already selected this country. Please select a different country"
+        }
         # redirect for POST-redirect-GET to ensure form isn't submitted
         # multiple times if reloaded        
         return redirect(url_for('draft_page'))
@@ -109,26 +111,32 @@ def draft_page():
             if country_codes[country] not in avail_country_codes:
                 avail_country_codes.append(country_codes[country])
 
-        player_league = players[players['Name'] == draft_order[current_draft_pick]]["League"].item()
+        player_league = players[
+            players['Name'] == draft_order[current_draft_pick]
+        ]["League"].item()
+        
         leagues = players[["Name", "League"]].values.tolist()
         if "error_message" in session["messages"]:
-            return render_template('draft.html',
-                                   player=draft_order[current_draft_pick], 
-                                   available_countries=tiers[draft_round[1]], 
-                                   country_codes=avail_country_codes,
-                                   round=draft_round[0],
-                                   curr_league=player_league,
-                                   all_leagues=leagues,
-                                   error=session["messages"]["error_message"])
+            return render_template(
+                'draft.html',
+                player=draft_order[current_draft_pick], 
+                available_countries=tiers[draft_round[1]], 
+                country_codes=avail_country_codes,
+                round=draft_round[0],
+                curr_league=player_league,
+                all_leagues=leagues,
+                error=session["messages"]["error_message"]
+            )
         
-        return render_template('draft.html', 
-                               player=draft_order[current_draft_pick],
-                               available_countries=tiers[draft_round[1]],
-                               country_codes=avail_country_codes,
-                               curr_league=player_league,
-                               all_leagues=leagues,
-                               round=draft_round[0])
-
+        return render_template(
+            'draft.html', 
+            player=draft_order[current_draft_pick],
+            available_countries=tiers[draft_round[1]],
+            country_codes=avail_country_codes,
+            curr_league=player_league,
+            all_leagues=leagues,
+            round=draft_round[0]
+        )
 
 @app.route('/play-game', methods = ["GET", "POST"])
 def play_game():
@@ -138,7 +146,8 @@ def play_game():
     '''
     if request.method == "POST":
 
-        if (request.form.get("submit") is not None) and (request.form["submit"] == "Play Event"):
+        if (request.form.get("submit") is not None) and \
+              (request.form["submit"] == "Play Event"):
             curr_event = session['messages']['next_event']
             curr_participants = session['messages']['next_participants']
             event_results = game_play(curr_event, curr_participants)
@@ -146,12 +155,22 @@ def play_game():
                 next_event = random.choice(unplayed_events)
                 unplayed_events.remove(next_event)
                 athletes = get_event_athletes(next_event)
-                session['messages'] = {"event": event_results[0], "medalists": event_results[1], "next_event": next_event, "next_participants": athletes}
+                session['messages'] = {
+                    "event": event_results[0],
+                    "medalists": event_results[1], 
+                    "next_event": next_event, "next_participants": athletes
+                }
             else:
-                session['messages'] = {"event": event_results[0], "medalists": event_results[1]}    
+                session['messages'] = {
+                    "event": event_results[0], 
+                    "medalists": event_results[1]
+                }    
         
         else:
-            session['messages'] = {"next_event": session['messages']['next_event'], "next_participants": session['messages']['next_participants']}
+            session['messages'] = {
+                "next_event": session['messages']['next_event'], 
+                "next_participants": session['messages']['next_participants']
+            }
 
         return redirect(url_for('play_game'))
     
@@ -191,7 +210,8 @@ def play_game():
             flag_codes = medalist_country_codes, 
             events_left = (len(unplayed_events) + 1), 
             next_event = messages['next_event'], 
-            next_participants = participant_count_by_country(messages['next_participants']), 
+            next_participants = 
+                participant_count_by_country(messages['next_participants']), 
             players = draft_order,
             country_scores = reduced_medal_table
         )
@@ -203,7 +223,8 @@ def play_game():
             scoreboard = scoreboard_data, 
             events_left = (len(unplayed_events) + 1), 
             next_event = messages['next_event'], 
-            next_participants = participant_count_by_country(messages['next_participants']), 
+            next_participants = 
+                participant_count_by_country(messages['next_participants']), 
             players = draft_order,
             country_scores = reduced_medal_table
         )
@@ -216,6 +237,56 @@ def play_game():
         events_left=0,
         country_scores = reduced_medal_table
     )
+
+@app.route('/bet', methods = ["POST"])
+def set_bet():
+    '''
+    Sets the bet of each player
+    '''
+    data = request.get_json()
+    fn = data[0]['function']
+    player = data[1]['player']
+    bet = data[2]['bet']
+
+    player_index = players.index[
+        players['Name'] == player
+    ][0]
+
+    if fn == "Validate":
+        if bet is None:
+            return jsonify({
+                "status": "error", "msg": "Please fill out this field."
+            })
+        if bet <= 0: 
+            return jsonify({
+                "status": "error", "msg": "Your bet must be greater than 0."
+            })
+        
+        if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
+            return jsonify({
+                "status": "error", 
+                "msg": "You may only bet 1 point if your score is less than or equal to 0."
+            })
+    
+        if players.at[player_index, 'Score'] < bet and \
+            (players.at[player_index, 'Score'] > 0):
+            return jsonify({
+                "status": "error", 
+                "msg": "Your bet may not be higher than your current score."
+            })
+        
+        return jsonify({"status": "success"})
+    
+    country = data[3]['country']
+    if country == "None":
+        players.at[player_index, 'Bet On'] = None
+        players.at[player_index, 'Bet Amount'] = 0
+        return jsonify({"status": "success"})
+    
+    players.at[player_index, 'Bet On'] = country
+    players.at[player_index, 'Bet Amount'] = bet
+    print(players)
+    return jsonify({"status": "success"})
 
 def set_players(players_dict: dict):
     '''
@@ -683,46 +754,14 @@ def read_country_codes(file: str):
         for code in reader:
             country_codes[code[0]] = code[1]
 
-@app.route('/bet', methods = ["POST"])
-def set_bet():
-    data = request.get_json()
-    fn = data[0]['function']
-    player = data[1]['player']
-    bet = data[2]['bet']
-
-    player_index = players.index[
-        players['Name'] == player
-    ][0]
-
-    if fn == "Validate":
-        if bet is None:
-            return jsonify({"status": "error", "msg": "Please fill out this field."})
-        if bet <= 0: 
-            return jsonify({"status": "error", "msg": "Your bet must be greater than 0."})
-        
-        if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
-            return jsonify({"status": "error", "msg": "You may only bet 1 point if your score is less than or equal to 0."})
-    
-        if players.at[player_index, 'Score'] < bet and (players.at[player_index, 'Score'] > 0):
-            return jsonify({"status": "error", "msg": "Your bet may not be higher than your current score."})
-        
-        return jsonify({"status": "success"})
-    
-    country = data[3]['country']
-    if country == "None":
-        players.at[player_index, 'Bet On'] = None
-        players.at[player_index, 'Bet Amount'] = 0
-        return jsonify({"status": "success"})
-    
-    players.at[player_index, 'Bet On'] = country
-    players.at[player_index, 'Bet Amount'] = bet
-    print(players)
-    return jsonify({"status": "success"})
-
 def game_play(curr_event: str, athletes: list):
     '''
     This function performs the majority of the game play operations
     following league selection.
+
+    :param curr_event: the event being played
+    :param athletes: the athletes participating in the event
+    :return: the event name and the medalists
     '''
     
     previously_played = True if curr_event in previously_played_events \
@@ -776,6 +815,12 @@ def game_play(curr_event: str, athletes: list):
     return (curr_event, event_medalists)
 
 def participant_count_by_country(participants: list):
+    '''
+    Get the number of athletes a country has in an event
+
+    :param particiapnts: the participants of the event
+    :return: number of athletes a country has in an event
+    '''
     participant_count = {}
     sorted_participants = sorted(participants)
     
@@ -786,6 +831,12 @@ def participant_count_by_country(participants: list):
     return participant_count
 
 def get_event_athletes(event: str):
+    '''
+    Get the participating athletes in the event
+
+    :param event: the event being played
+    :return: list of athletes in the event
+    '''
     athletes = cxn.execute('''
             SELECT *
             FROM event_athletes
@@ -874,6 +925,9 @@ def update_player_scores(medalists: list):
     print(players)
 
 def set_rank():
+    '''
+    Set the rank of each player in the database
+    '''
     prev_score = 0
     rank = 1
     ordered_idx = 1
@@ -884,7 +938,7 @@ def set_rank():
         prev_score = player[2]
         ordered_idx += 1
 
-def reset_game():
+def end_game():
     '''
     Resets game and all necessary variables for whenever the game is 
     reset to ensure there are no issues with the game play.
@@ -928,14 +982,9 @@ def reset_game():
     )
     database_creation()
 
-def end_game():
-    '''
-    This function goes through required operations to end the game
-    '''
-
-    # currently just closes the connection to the database; function is
-    # a placeholder just in case needed in the future.
-    cxn.close()
-
 with app.app_context():
     database_creation()
+
+if __name__ == '__main__':
+    # run on the local ip at the port number
+    app.run(debug=True, port=3000)
