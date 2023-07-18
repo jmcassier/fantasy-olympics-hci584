@@ -1,7 +1,3 @@
-h1, h2, h3, p, div {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 .scoreboardTitle {
   width: fit-content;
   margin-top: 0;
@@ -38,26 +34,10 @@ h1, h2, h3, p, div {
   width: 100%;
 }
 
-.pageContent {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  height: calc(100% - 118px);
-}
-
-.sidebar {
-  background-color: #002F6C;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  row-gap: 40px;
-  padding: 20px 0;
-  overflow: auto;
-}
-
 .scoreboardSection { 
   display: flex;
   flex-direction: column;
-  row-gap: 10px;
+  row-gap: 40px;
   overflow: auto;
   padding: 0 20px;
   width: calc(100% - 80px);
@@ -75,16 +55,6 @@ h1, h2, h3, p, div {
   color: white;
   align-items: center;
   margin: 0;
-}
-
-.mainContainer {
-  line-height: 1.5;
-  text-align: left;
-  width: calc(100% - 104px);
-  max-width: 1050px;
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
 }
 
 .podium {
@@ -114,8 +84,8 @@ h1, h2, h3, p, div {
   border-radius: 16px;
   align-items: center;
   row-gap: 18px;
-  box-shadow: 10px 10px 10px #d7d7d7;
-  background-color: #F8F8FF;
+  box-shadow: 10px 10px 10px var(--light-grey);
+  background-color: var(--off-white);
   text-align: center;
   width: 105px;
   height: 139px;
@@ -130,7 +100,7 @@ h1, h2, h3, p, div {
 }
 
 .bronze {
-  background-color: #cd7f32 !important;  
+  background-color: var(--bronze) !important;  
 }
 
 .flag {
@@ -154,13 +124,13 @@ h1, h2, h3, p, div {
   border-radius: 12px;
   font-size: 16px;
   margin: 8px 5px;
-  background-color: #002F6C;
+  background-color: var(--blue);
 }
 
 .continueBtn:hover,
 .continueBtn:focus {
   cursor: pointer;
-  background-color: #001939;
+  background-color: var(--blue-hover);
   outline: none;
 }
 
@@ -172,13 +142,13 @@ h1, h2, h3, p, div {
   border-radius: 12px;
   font-size: 16px;
   margin: 8px 5px;
-  background-color: #960018;
+  background-color: var(--red);
 }
 
 .endGame > button:hover,
 .endGame> button:focus {
   cursor: pointer;
-  background-color: #58000f;
+  background-color: var(--red-hover);
   outline: none;
 }
 
@@ -190,56 +160,6 @@ h1, h2, h3, p, div {
   height: 78px;
 }
 
-.title {
-  color: #002F6C;
-  margin-top: 6px;
-  margin-bottom: 0;
-  font-size: 32px;
-}
-
-.quitGame,
-.endGame {
-  display: flex;
-  height: 78px;
-  margin-bottom: 0;
-  align-items: center;
-  flex-direction: row;
-  direction: rtl;
-}
-
-.quitGame > button,
-.skipButton {
-  color: #960018;
-  font-weight: 600;
-  padding: 9px 15px;
-  border-radius: 12px;
-  font-size: 16px;
-  margin: 8px 5px;
-  border: none;
-  outline: 2px solid #960018;
-  outline-offset: -2px;
-  background-color: transparent;
-}
-
-.quitGame > button:hover,
-.quitGame > button:focus,
-.skipButton:hover,
-.skipButton:focus {
-  cursor: pointer;
-  background-color: #9600183b;
-}
-
-.disabled {
-  color: white;
-  font-weight: 600;
-  border: none;
-  padding: 9px 15px;
-  border-radius: 12px;
-  font-size: 16px;
-  margin: 8px 5px;
-  background-color: grey;
-}
-
 .bettingContainer {
   display: flex;
   flex-direction: row;
@@ -249,8 +169,8 @@ h1, h2, h3, p, div {
 }
 
 .playerBet {
-  box-shadow: 10px 10px 10px #d7d7d7;
-  background-color: #F8F8FF;
+  box-shadow: 10px 10px 10px var(--light-grey);
+  background-color: var(--off-white);
   border-radius: 12px;
   padding: 16px 24px;
   width: 225px;
@@ -268,13 +188,13 @@ h1, h2, h3, p, div {
   border-radius: 12px;
   font-size: 16px;
   margin: 8px 5px;
-  background-color: #329932;
+  background-color: var(--green);
 }
 
 .placeButton:hover,
 .placeButton:focus {
   cursor: pointer;
-  background-color: #008000;
+  background-color: var(--green-hover);
   outline: none;
 }
 
@@ -282,24 +202,11 @@ h3 {
   margin: 0;
 }
 
-.sidebar > div::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sidebar > div::-webkit-scrollbar-track {
-  background: none;
-}
- 
-.sidebar > div::-webkit-scrollbar-thumb {
-  border-radius: 16px;
-  background: white;
-}
-
 hr {
   height: 2px;
   border-width: 0;
   width: calc(5 * 100% / 6);
-  background-color: #002F6C;
+  background-color: var(--blue);
   margin: 0 0 9px auto;
 }
 
@@ -324,7 +231,7 @@ hr {
   border: none;
   margin: 0;
   background-color: white;
-  color: #002F6C;
+  color: var(--blue);
   height: 100%;
   padding: 6px 9px 6px 9px;
 }
@@ -339,5 +246,5 @@ hr {
 
 .pillButton:hover {
   cursor: pointer;
-  background-color: #001939;
+  background-color: var(--blue-hover);
 }

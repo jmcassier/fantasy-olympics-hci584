@@ -4,6 +4,7 @@
             http-equiv="Cache-Control"
             content="no-cache, no-store, must-revalidate"
         />
+        <link rel="stylesheet" href="../static/css/shared.css" />
         <link rel="stylesheet" href="../static/css/home.css" />
     </head>
     <body>
@@ -146,7 +147,7 @@
         </div>
     </body>
     <script type="text/javascript">
-        active = 0;
+        let active = 0;
         function createNameFields(numPlayers) {
             this.active = numPlayers;
             let currPlayerCount = document.getElementById(

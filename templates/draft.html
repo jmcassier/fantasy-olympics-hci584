@@ -1,6 +1,7 @@
 <html>
     <head>
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <link rel="stylesheet" href="../static/css/shared.css" />
         <link rel="stylesheet" href="../static/css/draft.css" />
         <link 
             rel="stylesheet"
@@ -10,27 +11,27 @@
     <body style="min-width: 950px; margin: 0;">
         {% include "header.html" %}
         <div id="page-container" class="pageContent">
-            <div id="sidebar" class="sidebar"">
+            <div id="sidebar" class="sidebar">
                 <h2>Current Leagues</h3>
                 <div>
                     {% for league in all_leagues %}
-                        {% if league[1] == [] %}
-                            <div class="leagueContainer">
-                                <h3>{{ league[0] }}</h3>
-                                <hr>
-                                <div>No teams in your league yet!</div>
+                    {% if league[1] == [] %}
+                    <div class="leagueContainer">
+                        <h3>{{ league[0] }}</h3>
+                        <hr>
+                        <div>No teams in your league yet!</div>
+                    </div>
+                    {% else %}
+                        <div class="leagueContainer">
+                            <h3>{{ league[0] }}</h3>
+                            <hr>
+                            <div>
+                                {% for country in league[1] %}
+                                    <div>{{ country }}</div>
+                                {% endfor %}
                             </div>
-                        {% else %}
-                            <div class="leagueContainer">
-                                <h3>{{ league[0] }}</h3>
-                                <hr>
-                                <div>
-                                    {% for country in league[1] %}
-                                        <div>{{ country }}</div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
+                        </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -51,14 +52,12 @@
     </body>
 
     <script type="text/javascript">
-        let countries = '{{ available_countries }}'.replace(
-            /&#39;/g, ''
-        ).replace( '[', '').replace(']', '').split(", ");
-        console.log(countries);
-        countries = countries.sort((c1, c2) => c1 - c2);
-        let codes = '{{ country_codes }}'.replace(
-            /&#39;/g, ''
-        ).replace('[', '').replace(']', '').split(", ");
+        let countries = JSON.parse('{{ available_countries }}'.replace(
+                /&#39;/g, '"'
+            )).sort((c1, c2) => c1 - c2);
+        let codes = JSON.parse('{{ country_codes }}'.replace(
+            /&#39;/g, '"'
+        ));
         counts = {};
         countries.forEach(
             function(country) { counts[country] = (counts[country] || 0) + 1; }
