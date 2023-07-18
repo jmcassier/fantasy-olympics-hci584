@@ -5,135 +5,182 @@
             content="no-cache, no-store, must-revalidate"
         />
         <link rel="stylesheet" href="../static/css/game.css" />
+        <link rel="stylesheet" href="../static/css/shared.css" />
         <link 
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css"
         />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
-    <body style="min-width: 1176px">
-        <div class="mainContainer">
-            {% if events_left != 0 %}
-                <div class="header">
-                    <form action="/" id="game_play" method="POST" class="quitGame">
-                        <button type="submit">Quit Game</button>
-                    </form>
-                    <h1 class="title"> GAME PLAY </h1>
+    <body style="min-width: 1176px; margin: 0;">
+        {% include "header.html" %}
+        <div id="page-container" class="pageContent">
+            <div id="sidebar" class="sidebar">
+                <div class="sidebarTitle">
+                    <h2>Scoreboard</h2>
+                    <div role="tablist" class="pillWrap">
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('expand')"
+                            class="pillButton left"
+                            id="expand-button"
+                        >
+                            Expand
+                        </button>
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('collapse')"
+                            class="activePillButton right"
+                            id="collapse-button"
+                            disabled
+                        >
+                            Collapse
+                        </button>
+                    </div>
                 </div>
-                <h2>
-                    Events Left: {{events_left}}
-                </h2>
-            {% else %}
-                <h1 class="title"> GAME PLAY </h1>
-                <h2> Game Over </h2>
-            {% endif %}
-            <div class="gameData">
-                <div class="podium">
-                    {% if medalists %}
-                        <h2>
-                            {{event}}
-                        </h2>
-                        <div class="medalists">
-                            <div class="medalist silver" style="transform: translateY(-25px)">
-                                <span id="silver-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[1]}}
-                                    </div>
-                                    <div>
-                                        2
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="medalist gold" style="transform: translateY(-50px)">
-                                <span id="gold-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[0]}}
-                                    </div>
-                                    <div>
-                                        1
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="medalist bronze">
-                                <span id="bronze-1-flag"></span>
-                                <div>
-                                    <div>
-                                        {{medalists[2]}}
-                                    </div>
-                                    <div>
-                                        3
-                                    </div>
-                                </div>
-                            </div>
-                            {% if medalists[3] != null %}
-                                <div class="medalist bronze">
-                                    <span id="bronze-2-flag"></span>
-                                    <div>
-                                        <div>
-                                            {{medalists[3]}}
-                                        </div>
-                                        <div>
-                                            3
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                    <h2>{{next_event}}</h2>
-                    {{next_participants}}
-                </div>
-                <div class="scoreboard">
-                    <h2 class="scoreboardTitle">Scoreboard</h2>
+                <div id="scoreboard-section" class="scoreboardSection">
                     {% for row in scoreboard %}
+                    <div id="player-scores" class="scoreboard">
                         <div class="playerScore">
                             {% if row[3] == 1 %}
-                                <div class="scoreboardRank gold">
-                                    {{row[3]}}
-                                </div>
+                            <div class="scoreboardRank gold">
+                                {{row[3]}}
+                            </div>
                             {% elif row[3] == 2 %}
-                                <div class="scoreboardRank silver">
-                                    {{row[3]}}
-                                </div>
+                            <div class="scoreboardRank silver">
+                                {{row[3]}}
+                            </div>
                             {% elif row[3] == 3 %}
-                                <div class="scoreboardRank bronze">
-                                    {{row[3]}}
-                                </div>
+                            <div class="scoreboardRank bronze">
+                                {{row[3]}}
+                            </div>
                             {% else %}
-                                <div class="scoreboardRank">
-                                    {{row[3]}}
-                                </div>
+                            <div class="scoreboardRank">
+                                {{row[3]}}
+                            </div>
                             {% endif %}
-                            <div>
-                                {{row[0]}}
+                            <div> {{row[0]}} </div>
+                            <div> {{row[2]}} </div>
+                        </div>
+                        <div name="expanded-view" hidden>
+                            <hr>
+                            {% for country in row[1] %}
+                            <div 
+                                name="expanded-country" 
+                                class="playerScore" 
+                                style="direction: rtl; text-align: left"
+                            >
+                                <div name="{{country}}-score"></div>
+                                <div>{{country}}</div>
                             </div>
-                            <div class="countries" hidden>
-                                {{row[1][0]}}
-                                {{row[1][1]}}
-                                {{row[1][2]}}
-                                {{row[1][3]}}
-                                {{row[1][4]}}
-                                {{row[1][5]}}
-                                {{row[1][6]}}
-                                {{row[1][7]}}
-                            </div>
-                            <div>
-                                {{row[2]}}
+                            {% endfor %}
+                            <div 
+                                name="expanded-country" 
+                                class="playerScore" 
+                                style="direction: rtl; text-align: left"
+                            >
+                                <div style="direction: ltr; ">{{row[6]}}</div>
+                                <div>Net Bet Score</div>
                             </div>
                         </div>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
-            {% if events_left != 0 %}
+            <div id="main-container" class="mainContainer">
+                {% if events_left != 0 %}
+                <div class="header">
+                    <h1 class="title"> Game Play ({{events_left}} Events Left) </h1>
+                    <form action="/" id="game_play" method="POST" class="quitGame">
+                        <button type="submit">Quit Game</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="header">
+                    <h1 class="title"> Game Over - {{scoreboard[0][0]}} Won! </h1>
+                    <form action="/" id="game_play" method="POST" class="endGame">
+                        <button type="submit">End Game</button>
+                    </form>
+                </div>
+                {% endif %}
+                {% if medalists %}
+                <div class="podium">
+                    <h2>
+                        {{event}}
+                    </h2>
+                    <div class="medalists">
+                        <div class="medalist silver" style="transform: translateY(-25px)">
+                            <span id="silver-flag"></span>
+                            <div>
+                                <div>
+                                    {{medalists[1]}}
+                                </div>
+                                <div>
+                                    2
+                                </div>
+                            </div>
+                        </div>
+                        <div class="medalist gold" style="transform: translateY(-50px)">
+                            <span id="gold-flag"></span>
+                            <div>
+                                <div>
+                                    {{medalists[0]}}
+                                </div>
+                                <div>
+                                    1
+                                </div>
+                            </div>
+                        </div>
+                        <div class="medalist bronze">
+                            <span id="bronze-1-flag"></span>
+                            <div>
+                                <div>
+                                    {{medalists[2]}}
+                                </div>
+                                <div>
+                                    3
+                                </div>
+                            </div>
+                        </div>
+                        {% if medalists[3] != null %}
+                        <div class="medalist bronze">
+                            <span id="bronze-2-flag"></span>
+                            <div>
+                                <div>
+                                    {{medalists[3]}}
+                                </div>
+                                <div>
+                                    3
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% if events_left != 0 %}
+                <div id="betting-section">
+                    <h2>Place your bets for {{next_event}}</h2>
+                    <div id="betting-container" class="bettingContainer">
+                    </div>
+                </div>
                 <form action="/play-game" id="game_play" method="POST">
-                    <button type="submit" name="submit" value="Play Event" class="continueBtn">CONTINUE</button>
+                    <input type="hidden" id="scoreboardView" name="scoreboardView" value="{{scoreboard_view}}">
+                    <button 
+                        id="continue" 
+                        type="submit"
+                        name="submit" 
+                        value="Play Event" 
+                        class="disabled"
+                        disabled
+                    >
+                        Continue
+                    </button>
                 </form>
-            {% else %}
-                <form action="/" id="game_play" method="POST" class="endGame">
-                    <button type="submit">End Game</button>
-                </form>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
     </body>
     <script type="text/javascript">
@@ -148,14 +195,195 @@
             }
         }
 
-        let codes = '{{ flag_codes }}'.replace(
-            /&#39;/g, ''
-        ).replace('[', '').replace(']', '').split(", ");
-        setFlag("gold", codes[0]);
-        setFlag("silver", codes[1]);
-        setFlag("bronze-1", codes[2]);
-        if (codes.length === 4) {
-            setFlag("bronze-2", codes[3]);
+        if ('{{ flag_codes }}' !== "") {
+            let codes =JSON.parse('{{ flag_codes }}'.replace(
+                /&#39;/g, '"'
+            ));
+            setFlag("gold", codes[0]);
+            setFlag("silver", codes[1]);
+            setFlag("bronze-1", codes[2]);
+            if (codes.length === 4) {
+                setFlag("bronze-2", codes[3]);
+            }
+        }
+
+        function toggleView(status) {
+            const leagues = document.getElementsByName("expanded-view");
+            const expandButton = document.getElementById("expand-button");
+            const collapseButton = document.getElementById("collapse-button");
+            if('{{events_left}}' != 0) {
+                document.getElementById("scoreboardView").setAttribute("value", status);
+            }
+            if (status === "expand") {
+                expandButton.setAttribute("class", "activePillButton left");
+                expandButton.setAttribute("disabled", "");
+                collapseButton.setAttribute("class", "pillButton right");
+                collapseButton.removeAttribute("disabled");
+                for (league of leagues) {
+                    league.hidden = false;
+                }
+            }
+            else {
+                expandButton.setAttribute("class", "pillButton left");
+                expandButton.removeAttribute("disabled");
+                collapseButton.setAttribute("class", "activePillButton right");
+                collapseButton.setAttribute("disabled", "");
+                for (league of leagues) {
+                    league.hidden = true;
+                }
+            }
+        }
+
+        toggleView('{{scoreboard_view}}');
+        
+        let betCount = 0;
+        let players = [];
+
+        const countryScores = JSON.parse('{{ country_scores }}'.replace(
+            /&#39;/g, '"'
+        ));
+
+        for (score of countryScores) {
+            const scoreNodes = document.getElementsByName(`${score[0]}-score`);
+            for (node of scoreNodes) {
+                node.innerText = score[1];
+            }
+        }
+        
+        if ('{{ players }}' !== "") {
+            players = JSON.parse('{{ players }}'.replace(
+                /&#39;/g, '"'
+            )).sort((c1, c2) => c1 - c2);
+
+            let betCountries = JSON.parse('{{ next_participants }}'.replace(
+                /&#39;/g, '"'
+            ).replace("Cote d-Ivoire", "Cote d'Ivoire"));
+
+            if (Object.keys(betCountries).includes("Cote d-Ivoire")) {
+                betCountries["Cote d'Ivoire"] = betCountries["Cote d-Ivoire"];
+                delete betCountries["Cote d-Ivoire"];
+            }
+
+            for (player of players) {
+                const betForm = document.createElement('form');
+                betForm.setAttribute("id", `${player}-bet`);
+                betForm.setAttribute("onsubmit", `return placeBet(${player}, '${player}', 'Placed');`)
+                betForm.setAttribute("class", "playerBet");
+                const playerName = document.createElement('h3');
+                playerName.innerHTML = `${player}`;
+                betForm.appendChild(playerName);
+                const radioButtons = document.createElement('div');
+                radioButtons.setAttribute("id", `${player}-radio-btn-container`);
+                for (country of Object.keys(betCountries)) {
+                    const radioBtnWrapper = document.createElement('div');
+                    const radioBtn = document.createElement('input');
+                    radioBtn.setAttribute("type", "radio");
+                    radioBtn.setAttribute("id", `${country}-${player}`);
+                    radioBtn.setAttribute("value", `${country}`);
+                    radioBtn.setAttribute("name", player);
+                    radioBtn.setAttribute("required", "");
+                    const label = document.createElement('label');
+                    label.setAttribute("for", `${country}-${player}`);
+                    label.innerText = betCountries[country] == 1 ? country : `${country} (${betCountries[country]} athletes)`;
+                    radioBtnWrapper.appendChild(radioBtn);
+                    radioBtnWrapper.appendChild(label);
+                    radioButtons.appendChild(radioBtnWrapper);
+                }
+                betForm.appendChild(radioButtons);
+                const amount = document.createElement('input');
+                amount.setAttribute("type", "number");
+                amount.setAttribute("id", `${player}-amount`);
+                amount.setAttribute("name", "amount");
+                amount.setAttribute("required", "");
+                amount.setAttribute("oninput", `validateNumber(this, '${player}')`);
+                const placeBet = document.createElement('input');
+                placeBet.setAttribute("type", "submit");
+                placeBet.setAttribute("id", "Place Bet");
+                placeBet.setAttribute("value", "Place Bet");
+                placeBet.setAttribute("class", "placeButton");
+                const noBet = document.createElement('button');
+                noBet.setAttribute("type", "button");
+                noBet.setAttribute("id", "Skip Bet");
+                noBet.setAttribute("value", "Skip Bet");
+                noBet.setAttribute("class", "skipButton");
+                noBet.innerText = "Skip Bet";
+                noBet.setAttribute("onClick", `placeBet(${player}, '${player}', 'Skip')`);
+                const betBtns = document.createElement('div');
+                betBtns.setAttribute("id", `${player}-bet-buttons`);
+                betForm.appendChild(amount);
+                betBtns.appendChild(placeBet);
+                betBtns.appendChild(noBet);
+                betForm.appendChild(betBtns)
+                document.getElementById("betting-container").appendChild(betForm);
+            }
+        }
+
+        function validateNumber(input, name) {
+            data = [
+                {"function": "Validate"},
+                {"player": name},
+                {"bet": parseInt(input.value)}
+            ];
+            $.ajax({
+                type: "POST",
+                url: "/bet",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: 'json',
+                success: (result) => {
+                    if (result.status === "success") {
+                        input.setCustomValidity("")
+                    }
+                    else {
+                        input.setCustomValidity(result.msg);
+                    }
+                }
+            })
+        }
+
+        function placeBet(countryButtons, player, type) {
+            let data = [];
+            if (type === 'Skip') {
+                data = [
+                    {"function": "PlaceBet"},
+                    {"player": player},
+                    {"bet": 0},
+                    {"country": "None"}
+                ];
+            }
+            else {
+                data = [
+                    {"function": "PlaceBet"},
+                    {"player": player},
+                    {"bet": parseInt(document.getElementById(`${player}-amount`).value)},
+                    {"country": countryButtons.value}
+                ];
+            }
+            $.ajax({
+                type: "POST",
+                url: "/bet",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: 'json',
+                success: (result) => {
+                    if (result.status === "success") {
+                        betCount++;
+                        betText = type === 'Skip' ? "Bet Skipped" : "Bet Placed !"
+                        document.getElementById(`${player}-radio-btn-container`).innerHTML = 
+                            `<h3>
+                                ${betText}
+                            </h3>`;
+                        document.getElementById(`${player}-amount`).remove();
+                        document.getElementById(`${player}-bet-buttons`).remove();
+                        if (betCount == players.length) {
+                            document.getElementById("continue").removeAttribute("disabled");
+                            document.getElementById("continue").setAttribute("class", "continueBtn");
+                        }
+                    }
+                    return false;
+                }
+            })
+            return false;
         }
     </script>
 </html>

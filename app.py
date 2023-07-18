@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_cachecontrol import dont_cache
 import csv
 import pandas as pd
@@ -25,14 +25,13 @@ previously_played_events = []
 # these events always give 2 bronze medals
 dual_bronze = ['Boxing', 'Judo', 'Karate', 'Taekwondo', 'Wrestling']
 
-game_medal_table = pd.DataFrame(
-    columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score']
-)
+game_medal_table = pd.DataFrame(columns = ['Country', 'Score'])
 draft_order = []
 current_draft_pick = 0
 draft_round = [1, 'A']
 country_codes = {} # used to determine flag icons in UI
 session = {"messages": {}} # mock way of establishing session data
+master_draft = []
 
 app = Flask(__name__)
 
@@ -50,7 +49,7 @@ def home_page():
         redirect(url_for('home_page'))
     
     if (len(players.index) > 0) or (len(game_medal_table) > 0):
-        reset_game()
+        end_game()
     
     return render_template('home.html')
 
@@ -85,7 +84,12 @@ def draft_page():
                 next_event = random.choice(unplayed_events)
                 unplayed_events.remove(next_event)
                 athletes = get_event_athletes(next_event)
-                session['messages'] = {"next_event": next_event, "next_participants": athletes}
+                session['messages'] = {
+                    "next_event": next_event, 
+                    "next_participants": athletes,
+                    "scoreboard_view": "collapse"
+                }
+                draft_order.sort()
                 return redirect(url_for('play_game'), 307)
             session["messages"] = {}
 
@@ -93,7 +97,9 @@ def draft_page():
             # submitted multiple times if reloaded
             return redirect(url_for('draft_page')) 
         
-        session["messages"] = {"error_message": "You have already selected this country. Please select a different country"}
+        session["messages"] = {
+            "error_message": "You have already selected this country. Please select a different country"
+        }
         # redirect for POST-redirect-GET to ensure form isn't submitted
         # multiple times if reloaded        
         return redirect(url_for('draft_page'))
@@ -103,22 +109,37 @@ def draft_page():
         avail_country_codes = []
         for country in tiers[draft_round[1]]:
             if country_codes[country] not in avail_country_codes:
-                avail_country_codes.append(country_codes[country])
+                if country == 'Cote d-Ivoire':
+                    avail_country_codes.append(country_codes["Cote d'Ivoire"])
+                else:
+                    avail_country_codes.append(country_codes[country])
 
-        if "error_message" in session["messages"]:
-            return render_template('draft.html',
-                                   player=draft_order[current_draft_pick], 
-                                   available_countries=tiers[draft_round[1]], 
-                                   country_codes=avail_country_codes,
-                                   round=draft_round[0],
-                                   error=session["messages"]["error_message"])
+        player_league = players[
+            players['Name'] == draft_order[current_draft_pick]
+        ]["League"].item()
         
-        return render_template('draft.html', 
-                               player=draft_order[current_draft_pick],
-                               available_countries=tiers[draft_round[1]],
-                               country_codes=avail_country_codes,
-                               round=draft_round[0])
-
+        leagues = players[["Name", "League"]].values.tolist()
+        if "error_message" in session["messages"]:
+            return render_template(
+                'draft.html',
+                player=draft_order[current_draft_pick], 
+                available_countries=tiers[draft_round[1]], 
+                country_codes=avail_country_codes,
+                round=draft_round[0],
+                curr_league=player_league,
+                all_leagues=leagues,
+                error=session["messages"]["error_message"]
+            )
+        
+        return render_template(
+            'draft.html', 
+            player=draft_order[current_draft_pick],
+            available_countries=tiers[draft_round[1]],
+            country_codes=avail_country_codes,
+            curr_league=player_league,
+            all_leagues=leagues,
+            round=draft_round[0]
+        )
 
 @app.route('/play-game', methods = ["GET", "POST"])
 def play_game():
@@ -127,11 +148,12 @@ def play_game():
     see how the game is unfolding and their rank amongst other players.
     '''
     if request.method == "POST":
+        scoreboard_view = "collapse"
+        if request.form.get("scoreboardView"):
+            scoreboard_view = request.form["scoreboardView"]
 
-        print(request.form.get("submit"))
-
-        if (request.form.get("submit") is not None) and (request.form["submit"] == "Play Event"):
-            print("EVENT PLAY BTN CLICKED")
+        if (request.form.get("submit") is not None) and \
+              (request.form["submit"] == "Play Event"):
             curr_event = session['messages']['next_event']
             curr_participants = session['messages']['next_participants']
             event_results = game_play(curr_event, curr_participants)
@@ -139,22 +161,33 @@ def play_game():
                 next_event = random.choice(unplayed_events)
                 unplayed_events.remove(next_event)
                 athletes = get_event_athletes(next_event)
-                session['messages'] = {"event": event_results[0], "medalists": event_results[1], "next_event": next_event, "next_participants": athletes}
+                session['messages'] = {
+                    "event": event_results[0],
+                    "medalists": event_results[1], 
+                    "next_event": next_event, 
+                    "next_participants": athletes,
+                    "scoreboard_view": scoreboard_view
+                }
             else:
-                session['messages'] = {"event": event_results[0], "medalists": event_results[1]}    
+                session['messages'] = {
+                    "event": event_results[0], 
+                    "medalists": event_results[1],                  
+                    "scoreboard_view": scoreboard_view
+                }    
+        
         else:
-            if (request.form.get("submit") is not None) and (request.form["submit"] == "Draft Team"):
-                print("END DRAFT !!!")
-            session['messages'] = {"next_event": session['messages']['next_event'], "next_participants": session['messages']['next_participants']}
+            session['messages'] = {
+                "next_event": session['messages']['next_event'], 
+                "next_participants": session['messages']['next_participants'],
+                "scoreboard_view": scoreboard_view
+            }
 
         return redirect(url_for('play_game'))
     
     messages = session['messages']
     if 'event' in messages:
-        print(messages['event'])
         messages['event']
     if 'medalists' in messages:
-        print(messages['medalists'])
         messages['medalists']
         medalist_country_codes = []
         for medalist in messages['medalists']:
@@ -165,15 +198,106 @@ def play_game():
         scoreboard_data.append(
             players.loc[player[0], :].values.flatten().tolist()
         )
+    reduced_medal_table = []
+    for drafted in master_draft:
+        if drafted in game_medal_table.values:
+            countryIndex = game_medal_table.index[
+                game_medal_table['Country'] == drafted
+            ][0]
+            reduced_medal_table.append(
+                game_medal_table.iloc[countryIndex, :].values.flatten().tolist()
+            )
+        else:
+            reduced_medal_table.append([drafted, 0])
 
     if 'event' in messages and 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
+        return render_template(
+            'game.html', 
+            scoreboard = scoreboard_data, 
+            event = messages['event'], 
+            medalists = messages['medalists'], 
+            flag_codes = medalist_country_codes, 
+            events_left = (len(unplayed_events) + 1), 
+            next_event = messages['next_event'], 
+            next_participants = 
+                participant_count_by_country(messages['next_participants']), 
+            players = draft_order,
+            country_scores = reduced_medal_table,
+            scoreboard_view = messages['scoreboard_view']
+        )
     
     if 'next_event' in messages:
-        return render_template('game.html', scoreboard=scoreboard_data, events_left=(len(unplayed_events) + 1), next_event=messages['next_event'], next_participants=messages['next_participants'])
-    
-    return render_template('game.html', scoreboard=scoreboard_data, event=messages['event'], medalists=messages['medalists'], flag_codes=medalist_country_codes, events_left=0)
 
+        return render_template(
+            'game.html', 
+            scoreboard = scoreboard_data, 
+            events_left = (len(unplayed_events) + 1), 
+            next_event = messages['next_event'], 
+            next_participants = 
+                participant_count_by_country(messages['next_participants']), 
+            players = draft_order,
+            country_scores = reduced_medal_table,
+            scoreboard_view = messages['scoreboard_view']
+        )
+    
+    return render_template(
+        'game.html', 
+        scoreboard = scoreboard_data, event=messages['event'], 
+        medalists = messages['medalists'], 
+        flag_codes = medalist_country_codes, 
+        events_left=0,
+        country_scores = reduced_medal_table,
+        scoreboard_view = messages['scoreboard_view']
+    )
+
+@app.route('/bet', methods = ["POST"])
+def set_bet():
+    '''
+    Sets the bet of each player
+    '''
+    data = request.get_json()
+    fn = data[0]['function']
+    player = data[1]['player']
+    bet = data[2]['bet']
+
+    player_index = players.index[
+        players['Name'] == player
+    ][0]
+
+    if fn == "Validate":
+        if bet is None:
+            return jsonify({
+                "status": "error", "msg": "Please fill out this field."
+            })
+        if bet <= 0: 
+            return jsonify({
+                "status": "error", "msg": "Your bet must be greater than 0."
+            })
+        
+        if (players.at[player_index, 'Score'] <= 0) and (bet != 1):
+            return jsonify({
+                "status": "error", 
+                "msg": "You may only bet 1 point if your score is less than or equal to 0."
+            })
+    
+        if players.at[player_index, 'Score'] < bet and \
+            (players.at[player_index, 'Score'] > 0):
+            return jsonify({
+                "status": "error", 
+                "msg": "Your bet may not be higher than your current score."
+            })
+        
+        return jsonify({"status": "success"})
+    
+    country = data[3]['country']
+    if country == "None":
+        players.at[player_index, 'Bet On'] = None
+        players.at[player_index, 'Bet Amount'] = 0
+        return jsonify({"status": "success"})
+    
+    players.at[player_index, 'Bet On'] = country
+    players.at[player_index, 'Bet Amount'] = bet
+    return jsonify({"status": "success"})
 
 def set_players(players_dict: dict):
     '''
@@ -235,6 +359,8 @@ def draft_team(drafted_team: str, tier: str):
     if drafted_team in players.at[player_index, 'League']:
         return False
     
+    if drafted_team not in master_draft:
+        master_draft.append(drafted_team)
 
     players.at[player_index, 'League'].append(drafted_team)
     tiers[tier].remove(drafted_team)
@@ -427,6 +553,12 @@ def database_creation():
             tiers['D'].append(row[0])
         elif avg >= 13:
             tiers['E'].append(row[0])
+    
+    tiers['A'].sort()
+    tiers['B'].sort()
+    tiers['C'].sort()
+    tiers['D'].sort()
+    tiers['E'].sort()
 
     # create event_athletes if not in the database
     if event_athletes_exists == []:
@@ -637,6 +769,10 @@ def game_play(curr_event: str, athletes: list):
     '''
     This function performs the majority of the game play operations
     following league selection.
+
+    :param curr_event: the event being played
+    :param athletes: the athletes participating in the event
+    :return: the event name and the medalists
     '''
     
     previously_played = True if curr_event in previously_played_events \
@@ -689,8 +825,33 @@ def game_play(curr_event: str, athletes: list):
     update_player_scores(event_medalists)
     return (curr_event, event_medalists)
 
+def participant_count_by_country(participants: list):
+    '''
+    Get the number of athletes a country has in an event
+
+    :param particiapnts: the participants of the event
+    :return: number of athletes a country has in an event
+    '''
+    participant_count = {}
+    sorted_participants = sorted(participants)
+    
+    for participant in sorted_participants:
+        # handle issue with Cote d'Ivoire on the front end
+        to_add = participant
+        if to_add == "Cote d'Ivoire":
+            to_add = "Cote d-Ivoire"
+        if to_add not in participant_count:
+            participant_count[to_add] = sorted_participants.count(participant)
+    
+    return participant_count
+
 def get_event_athletes(event: str):
-    print('in get athletes')
+    '''
+    Get the participating athletes in the event
+
+    :param event: the event being played
+    :return: list of athletes in the event
+    '''
     athletes = cxn.execute('''
             SELECT *
             FROM event_athletes
@@ -704,8 +865,7 @@ def get_event_athletes(event: str):
         athletes = list(athletes[1:7])
     else:
         athletes = list(athletes[1:])
-    
-    print(athletes)
+
     return athletes
 
 def update_game_medals(country: str, medal: str = 'Bronze'):
@@ -726,13 +886,9 @@ def update_game_medals(country: str, medal: str = 'Bronze'):
         country_idx = len(game_medal_table)
         game_medal_table.loc[country_idx] = {
             'Country': country, 
-            'Gold': 0, 
-            'Silver': 0, 
-            'Bronze': 0, 
             'Score': 0
         }
-    
-    game_medal_table.at[country_idx, medal] += 1
+
     if medal == 'Gold':
         game_medal_table.at[country_idx, 'Score'] += 3
     elif medal == 'Silver':
@@ -765,7 +921,7 @@ def update_player_scores(medalists: list):
         if (len(medalists) == 4) and (medalists[3] in league):
             players.at[index, 'Score'] += 1
 
-        bet_on = player[1]
+        bet_on = player[4]
         if bet_on is not None:
             if bet_on == medalists[0]:
                 players.at[index, 'Score'] += players.at[index, 'Bet Amount']
@@ -781,27 +937,29 @@ def update_player_scores(medalists: list):
         inplace=True
     )
     set_rank()
-    print(players)
 
 def set_rank():
+    '''
+    Set the rank of each player in the database
+    '''
     prev_score = 0
     rank = 1
     ordered_idx = 1
     for index, player in players.iterrows():
         if (player[2] != prev_score):
             rank = ordered_idx
-        print(f'rank {rank}')
         players.at[index, 'Rank'] = int(rank)
         prev_score = player[2]
         ordered_idx += 1
 
-def reset_game():
+def end_game():
     '''
     Resets game and all necessary variables for whenever the game is 
     reset to ensure there are no issues with the game play.
     '''
-    global players, game_medal_table, cxn, unplayed_events
-    global previously_played_events, tiers, country_codes, session
+    global players, game_medal_table, cxn, unplayed_events, draft_order
+    global current_draft_pick, draft_round, country_codes, session
+    global previously_played_events, tiers, master_draft
     players = pd.DataFrame(
         columns = [
             'Name', 
@@ -814,23 +972,33 @@ def reset_game():
         ]
     )
     game_medal_table = pd.DataFrame(
-        columns = ['Country', 'Gold', 'Silver', 'Bronze', 'Score']
+        columns = ['Country', 'Score']
     )
     unplayed_events = []
     previously_played_events = []
     tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
     country_codes = {}
     session["message"] = {}
+    master_draft = []
+
+
+    tiers = {'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
+    players = pd.DataFrame(
+        columns = [
+            'Name', 
+            'League', 
+            'Score',
+            'Rank',
+            'Bet On',
+            'Bet Amount',
+            'Net Bet Score',
+        ]
+    )
     database_creation()
-
-def end_game():
-    '''
-    This function goes through required operations to end the game
-    '''
-
-    # currently just closes the connection to the database; function is
-    # a placeholder just in case needed in the future.
-    cxn.close()
 
 with app.app_context():
     database_creation()
+
+if __name__ == '__main__':
+    # run on the local ip at the port number
+    app.run(debug=True, port=3000)

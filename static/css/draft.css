@@ -1,23 +1,36 @@
-.title {
-  text-align: center;
-  color: #002F6C;
-  margin-top: 24px;
-  margin-bottom: 0;
-  font-size: 52px;
+.sidebar > div { 
+  display: flex;
+  flex-direction: column;
+  row-gap: 40px;
+  overflow: auto;
+  padding: 0 20px;
+  width: calc(100% - 80px);
 }
-  
-h1, h2, h3, p, div {
-  font-family: Arial, Helvetica, sans-serif;
+
+.sidebar h2 {
+  color: white;
+  align-items: center;
+  margin: 20px 0 0 0;
+  overflow: none;
 }
-  
-.mainContainer {
-  line-height: 1.5;
-  text-align: left;
-  width: calc(100% - 104px);
-  max-width: 1050px;
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
+
+.leagueContainer {
+  border-radius: 16px;
+  background-color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.leagueContainer > h3 {
+  margin: 0 5px;
+}
+
+.leagueContainer > div {
+  margin: 0 5px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
 }
 
 .flag {
@@ -27,7 +40,7 @@ h1, h2, h3, p, div {
   position: relative;
   display: inline-block;
   width: 100px;
-  height: 75px;
+  height: 70px;
   line-height: 1em;
   border: 2px solid;
   background-color: white;
@@ -40,27 +53,34 @@ h1, h2, h3, p, div {
   padding: 9px 15px;
   border-radius: 12px;
   font-size: 16px;
-  background-color: #002F6C;
+  background-color: var(--blue);
   width: 100%;
 }
 
 .countryBtn:hover {
   cursor: pointer;
-  background-color: #001939;
+  background-color: var(--blue-hover);
 }
 
 .countrySelect {
   display: flex;
   flex-direction: column;
-  padding: 20px 20px;
+  padding: 20px;
   border: none;
   border-radius: 16px;
   align-items: center;
   row-gap: 18px;
-  box-shadow: 10px 10px 10px #d7d7d7;
-  background-color: #F8F8FF;
+  box-shadow: 10px 10px 10px var(--light-grey);
+  background-color: var(--off-white);
   text-align: center;
   width: 150px;
+}
+
+hr {
+  height: 2px;
+  border-width: 0;
+  width: 100%;
+  background-color: var(--blue);
 }
 
 .form {
@@ -68,44 +88,17 @@ h1, h2, h3, p, div {
   flex-wrap: wrap;
   column-gap: 48px;
   row-gap: 48px;
-  justify-content: center;
   margin-top: 28px;
 }
 
 .errorMsg {
-  color: #960018;
+  color: var(--red);
 }
 
 .header {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  direction: rtl;
+  grid-template-columns: 3fr 1fr;
   width: 100%;
-}
-
-.quitGame{
-  display: flex;
-  height: 78px;
-  margin-top: 24px;
-  margin-bottom: 0;
   align-items: center;
-  flex-direction: row;
-}
-
-.quitGame > button {
-  color: #960018;
-  font-weight: 600;
-  padding: 9px 15px;
-  border-radius: 12px;
-  font-size: 16px;
-  margin: 8px 5px;
-  border: 2px solid #960018;
-  background-color: transparent;
-}
-
-.quitGame > button:hover,
-.quitGame > button:focus {
-  cursor: pointer;
-  background-color: #9600183b;
-  outline: none;
+  height: 78px;
 }
