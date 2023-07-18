@@ -14,13 +14,92 @@
     <body style="min-width: 1176px; margin: 0;">
         {% include "header.html" %}
         <div id="page-container" class="pageContent">
+            <div id="sidebar" class="sidebar">
+                <div class="sidebarTitle">
+                    <h2>Scoreboard</h2>
+                    <div role="tablist" class="pillWrap">
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('expand')"
+                            class="pillButton left"
+                            id="expand-button"
+                        >
+                            Expand
+                        </button>
+                        <button
+                            role="tab"
+                            type="button"
+                            onClick="toggleView('collapse')"
+                            class="activePillButton right"
+                            id="collapse-button"
+                            disabled
+                        >
+                            Collapse
+                        </button>
+                    </div>
+                </div>
+                <div id="scoreboard-section" class="scoreboardSection">
+                    {% for row in scoreboard %}
+                        <div id="player-scores" class="scoreboard">
+                            <div class="playerScore">
+                                {% if row[3] == 1 %}
+                                    <div class="scoreboardRank gold">
+                                        {{row[3]}}
+                                    </div>
+                                {% elif row[3] == 2 %}
+                                    <div class="scoreboardRank silver">
+                                        {{row[3]}}
+                                    </div>
+                                {% elif row[3] == 3 %}
+                                    <div class="scoreboardRank bronze">
+                                        {{row[3]}}
+                                    </div>
+                                {% else %}
+                                <div class="scoreboardRank">
+                                    {{row[3]}}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    {{row[0]}}
+                                </div>
+                                <div>
+                                    {{row[2]}}
+                                </div>
+                            </div>
+                            <div name="expanded-view" hidden>
+                                <hr>
+                                {% for country in row[1] %}
+                                <div name="expanded-country" class="playerScore" style="direction: rtl; text-align: left">
+                                    <div> 
+                                        <div name="{{country}}-score"></div>
+                                    </div>
+                                    <div>
+                                        <div>{{country}}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                <div name="expanded-country" class="playerScore" style="direction: rtl; text-align: left">
+                                    <div>
+                                        
+                                        <div style="direction: ltr; ">{{row[6]}}</div>
+                                    </div>
+                                    <div>
+                                        <div>Net Bet Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
             <div id="main-container" class="mainContainer">
                 {% if events_left != 0 %}
                     <div class="header">
+                        <h1 class="title"> Game Play </h1>
                         <form action="/" id="game_play" method="POST" class="quitGame">
                             <button type="submit">Quit Game</button>
                         </form>
-                        <h1 class="title"> GAME PLAY </h1>
                     </div>
                     <h2>
                         Events Left: {{events_left}}
@@ -29,137 +108,74 @@
                     <h1 class="title"> GAME PLAY </h1>
                     <h2> Game Over </h2>
                 {% endif %}
-                <div class="gameData">
+                {% if medalists %}
                     <div class="podium">
-                        {% if medalists %}
-                            <h2>
-                                {{event}}
-                            </h2>
-                            <div class="medalists">
-                                <div class="medalist silver" style="transform: translateY(-25px)">
-                                    <span id="silver-flag"></span>
+                        <h2>
+                            {{event}}
+                        </h2>
+                        <div class="medalists">
+                            <div class="medalist silver" style="transform: translateY(-25px)">
+                                <span id="silver-flag"></span>
+                                <div>
                                     <div>
-                                        <div>
-                                            {{medalists[1]}}
-                                        </div>
-                                        <div>
-                                            2
-                                        </div>
+                                        {{medalists[1]}}
+                                    </div>
+                                    <div>
+                                        2
                                     </div>
                                 </div>
-                                <div class="medalist gold" style="transform: translateY(-50px)">
-                                    <span id="gold-flag"></span>
+                            </div>
+                            <div class="medalist gold" style="transform: translateY(-50px)">
+                                <span id="gold-flag"></span>
+                                <div>
                                     <div>
-                                        <div>
-                                            {{medalists[0]}}
-                                        </div>
-                                        <div>
-                                            1
-                                        </div>
+                                        {{medalists[0]}}
+                                    </div>
+                                    <div>
+                                        1
                                     </div>
                                 </div>
+                            </div>
+                            <div class="medalist bronze">
+                                <span id="bronze-1-flag"></span>
+                                <div>
+                                    <div>
+                                        {{medalists[2]}}
+                                    </div>
+                                    <div>
+                                        3
+                                    </div>
+                                </div>
+                            </div>
+                            {% if medalists[3] != null %}
                                 <div class="medalist bronze">
-                                    <span id="bronze-1-flag"></span>
+                                    <span id="bronze-2-flag"></span>
                                     <div>
                                         <div>
-                                            {{medalists[2]}}
+                                            {{medalists[3]}}
                                         </div>
                                         <div>
                                             3
                                         </div>
                                     </div>
                                 </div>
-                                {% if medalists[3] != null %}
-                                    <div class="medalist bronze">
-                                        <span id="bronze-2-flag"></span>
-                                        <div>
-                                            <div>
-                                                {{medalists[3]}}
-                                            </div>
-                                            <div>
-                                                3
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div id="scoreboard-section">
-                        <div role="tablist">
-                            <button
-                                role="tab"
-                                type="button"
-                                onClick="toggleView('collapse')"
-                            >
-                                Collapse Players
-                            </button>
-                            <button
-                                role="tab"
-                                type="button"
-                                onClick="toggleView('expand')"
-                            >
-                                Expand Players
-                            </button>
-                        </div>
-                        <div id="player-scores" class="scoreboard">
-                            <h2 class="scoreboardTitle">Scoreboard</h2>
-                            {% for row in scoreboard %}
-                                <div class="playerScore">
-                                    {% if row[3] == 1 %}
-                                        <div class="scoreboardRank gold">
-                                            {{row[3]}}
-                                        </div>
-                                    {% elif row[3] == 2 %}
-                                        <div class="scoreboardRank silver">
-                                            {{row[3]}}
-                                        </div>
-                                    {% elif row[3] == 3 %}
-                                        <div class="scoreboardRank bronze">
-                                            {{row[3]}}
-                                        </div>
-                                    {% else %}
-                                        <div class="scoreboardRank">
-                                            {{row[3]}}
-                                        </div>
-                                    {% endif %}
-                                    <div>
-                                        {{row[0]}}
-                                    </div>
-                                    <div>
-                                        {{row[2]}}
-                                    </div>
-                                </div>
-                                <div name="expanded-view" class="countries" hidden>
-                                    <div>{{row[1][0]}}</div>
-                                    <div>{{row[1][1]}}</div>
-                                    <div>{{row[1][2]}}</div>
-                                    <div>{{row[1][3]}}</div>
-                                    <div>{{row[1][4]}}</div>
-                                    <div>{{row[1][5]}}</div>
-                                    <div>{{row[1][6]}}</div>
-                                    <div>{{row[1][7]}}</div>
-                                </div>
-                            {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
-                </div>
+                {% endif %}
                 {% if events_left != 0 %}
                     <div id="betting-section">
                         <h2>Place your bets for {{next_event}}</h2>
                         <div id="betting-container" class="bettingContainer"></div>
                     </div>
                     <form action="/play-game" id="game_play" method="POST">
-                        <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>CONTINUE</button>
+                        <button id="continue" type="submit" name="submit" value="Play Event" class="disabled" disabled>Continue</button>
                     </form>
                 {% else %}
                     <form action="/" id="game_play" method="POST" class="endGame">
                         <button type="submit">End Game</button>
                     </form>
                 {% endif %}
-            </div>
-            <div id="sidebar" class="sidebar">
-                SIDEBAR
             </div>
         </div>
     </body>
@@ -189,21 +205,41 @@
 
         function toggleView(status) {
             const leagues = document.getElementsByName("expanded-view");
+            const expandButton = document.getElementById("expand-button");
+            const collapseButton = document.getElementById("collapse-button");
             if (status === "expand") {
+                expandButton.setAttribute("class", "activePillButton left");
+                expandButton.setAttribute("disabled", "");
+                collapseButton.setAttribute("class", "pillButton right");
+                collapseButton.removeAttribute("disabled");
                 for (league of leagues) {
                     league.hidden = false;
-                    console.log(league.hidden);
                 }
             }
             else {
+                expandButton.setAttribute("class", "pillButton left");
+                expandButton.removeAttribute("disabled");
+                collapseButton.setAttribute("class", "activePillButton right");
+                collapseButton.setAttribute("disabled", "");
                 for (league of leagues) {
                     league.hidden = true;
                 }
             }
-            console.log(leagues);
         }
         let betCount = 0;
         let players = [];
+
+        const countryScores = JSON.parse('{{ country_scores }}'.replace(
+            /&#39;/g, '"'
+        ));
+
+        for (score of countryScores) {
+            console.log(score);
+            const scoreNodes = document.getElementsByName(`${score[0]}-score`);
+            for (node of scoreNodes) {
+                node.innerText = score[1];
+            }
+        }
 
         if ('{{ players }}' !== "") {
             players = JSON.parse('{{ players }}'.replace(
@@ -246,6 +282,7 @@
                 amount.setAttribute("name", "amount");
                 amount.setAttribute("required", "");
                 amount.setAttribute("oninput", `validateNumber(this, '${player}')`);
+                console.log(amount.oninput);
                 const placeBet = document.createElement('input');
                 placeBet.setAttribute("type", "submit");
                 placeBet.setAttribute("id", "Place Bet");
@@ -269,10 +306,12 @@
         }
 
         function validateNumber(input, name) {
+            console.log(name);
+            console.log(input.value);
             data = [
                 {"function": "Validate"},
                 {"player": player},
-                {"bet": parseInt(document.getElementById(`${player}-amount`).value)}
+                {"bet": parseInt(input.value)}
             ];
             $.ajax({
                 type: "POST",
@@ -292,6 +331,7 @@
         }
 
         function placeBet(countryButtons, player, type) {
+            console.log(countryButtons);
             let data = [];
             if (type === 'Skip') {
                 data = [
@@ -302,22 +342,14 @@
                 ];
             }
             else {
-                let country = Array.from(countryButtons).filter((countryButton) => {countryButton.checked})[0].value;
-                // alert("error");
-                // console.log(x);
-                // for (countryButton of countryButtons) {
-                //     if (countryButton.checked) {
-                //         country = countryButton.value;
-                //         break;
-                //     }
-                // }
                 data = [
                     {"function": "PlaceBet"},
                     {"player": player},
                     {"bet": parseInt(document.getElementById(`${player}-amount`).value)},
-                    {"country": country}
+                    {"country": countryButtons.value}
                 ];
             }
+            console.log(data);
             $.ajax({
                 type: "POST",
                 url: "/bet",
@@ -339,6 +371,7 @@
                             document.getElementById("continue").setAttribute("class", "continueBtn");
                         }
                     }
+                    return false;
                 }
             })
             return false;
