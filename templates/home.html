@@ -11,18 +11,31 @@
         {% include "header.html" %}
         <div class="mainContainer">
             <p>
-                Fantasy Olympics is a game of chance created to simulate the
+                Fantasy Olympics is a game of chance created to simulate the 
                 selection of a fantasy sports league for the 2020 Tokyo 
                 Summer Olympics. Upon starting the game, each player will 
-                draft a league of 8 teams that will score them points. From 
-                there, the medalists for each sporting event are determined 
-                and displayed on the screen.
+                draft a league of 8 teams that will score them points. Once 
+                the teams are selected, each event is simulated and the 
+                medalists are determined. However, before each event is 
+                determined, each player has the opportunity to bet on which
+                team will win to gain more points.
             </p>
             <h2>
-                How To Play
+                Rules
             </h2>
-            <div>          
-                <h3> Draft rules: </h3>
+            <div>        
+                <h3> Set Up rules </h3>
+                <ol> 
+                    <li>
+                        All player names must be alphanumeric
+                    </li>
+                    <li>
+                        No two players may have the same name.
+                    </li>
+                </ol>
+            </div>
+            <div>        
+                <h3> Draft rules </h3>
                 <ol> 
                     <li>
                         Teams are categorized into 5 tiers - A, B, C, D, E.
@@ -44,7 +57,7 @@
                 </ol>
             </div>
             <div>    
-                <h3> Betting rules: </h3>
+                <h3> Betting rules </h3>
                 <ol> 
                     <li>
                         Before each event, each player will be able to bet on the
@@ -207,7 +220,10 @@
             for (let i = 0; i < playerCount; i++) {
                 let playerName = "player-" + i;
                 playerName = document.forms["player-names"][playerName].value;
-                console.log(playerName);
+                if (!/^\w+$/.test(playerName)) {
+                    alert("Names can only contain alphanumeric characters");
+                    return false;
+                }
                 if (playerNames.includes(playerName)) {
                     alert("Multiple players have the same name !");
                     return false;
