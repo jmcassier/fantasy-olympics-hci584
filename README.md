@@ -10,14 +10,17 @@ Fantasy Olympics is a game of chance created to simulate the selection of a fant
 
 ## Game Rules
 1. All player names must be alphanumeric and no two players may have the same name. 
+###
 2. Drafting Rules
    - Each person will create a league of 8 teams of the following composition: 2 A-tier teams, 1 B-tier team, 1 C-tier team, 1 D-tier team, and 3 E-tier teams.
    - If the game is being played in multiplayer mode, a team may only be chosen by a certain number of players. The number of times a team is available depends on the number of players and the number of teams available in a tier.
-   - For the first round of drafting, the players will be selected at random to select a team. The order will be flipped in each proceeding round (i.e. odd number rounds will have the same order; even number rounds will have the same order).
+   - For the first round of drafting, the players will be chosen at random to select a team. The order will be flipped in each proceeding round (i.e. odd number rounds will have the same order; even number rounds will have the same order).
+###
 3. Scoring
    - A player receives 3 points for each gold medal a team in their league wins.
    - A player receives 2 points for each silver medal a team in their league wins.
    - A player receives 1 point for each bronze medal a team in their league wins.
+###
 4. Betting
    - If a player doesn't have a chance of winning a medal (i.e. none of the participants in the event are in their league), they will have the choice to bet on who will win the gold medal.
    - If the player guesses the winner correctly, they will receive 1 point.
@@ -41,7 +44,9 @@ The program call also be run using in debug mode the optional debug flag:
 
 	flask run --debug
 
-## User Activity Flow
+At this point, go to http://localhost:5000/ to play the game.
+
+## User Walkthrough
 The first task is the players selecting the number of people will people playing their game. They can complete this task by clicking the button associated with the number of people playing, entering their names in the text field and clicking confirm players as shown in the gif below.
 
 ![Home Page gif](./docs/workflow-gifs/game_setup.gif)
@@ -58,9 +63,11 @@ As shown in the final gif below, the scoreboard has a collapsed and expanded vie
 
 ![Scoreboard gif](./docs/workflow-gifs/scoreboard.gif)
 
+If at anytime the user needs to quit the game, they can find a "Quit Game" button at the top right of their screen.
+
 ## Known Issues
 The only known issues are as follows:
 
 1. Player names must be alphanumeric. This was due to a bug discovered that I didn't have enough time to research and remediate. This, however, is accounted for on the frontend in a hot-fix to check to ensure all names are alphanumeric.
-
+###
 2. If you reload the main game play screen after someone places a bet in multiplayer mode, it resets and allows a player to redo their bet. This is a bug I didn't have enough to research and remediate. Please do not refresh the page once you hit the main play screen to avoid this glitch.
