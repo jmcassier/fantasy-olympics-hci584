@@ -11,7 +11,7 @@ Refer to "Set Up, How To Run & Packages" in the User's Guide (README.md). No add
 See the step-by-step process and gifs defined in the "User Walkthrough" section of the User's Guide (README.md).
 
 ## Code Walkthrough & Technical Flow
-&nbsp; &nbsp; &nbsp; &nbsp;From a technical perspective, the main GUI was created using Flask. During start up, the app either uses the data stored in the olympic_stats.db. If this SQL database doesn't exist or any of the 3 required tables (as defined below) are missing from it, the data in the medal-data folder is parsed and added to the olympic_stats.db. The data in the database is used to determine which Olympic teams are in each tier to have that ready to go during a player’s selection process, the weights a team has for each event, and the participants competing in each event. The table and data olympic_stats.db is described as follows:
+From a technical perspective, the main GUI was created using Flask. During start up, the app either uses the data stored in the olympic_stats.db. If this SQL database doesn't exist or any of the 3 required tables (as defined below) are missing from it, the data in the medal-data folder is parsed and added to the olympic_stats.db. The data in the database is used to determine which Olympic teams are in each tier to have that ready to go during a player’s selection process, the weights a team has for each event, and the participants competing in each event. The table and data olympic_stats.db is described as follows:
 
 1. scores_by_olympic_cycle stores each country's score at each individual Summer Olympics from 2008 to 2016.
     * Scores are calculated as follows: 3 points for each gold medal, 2 points for each silver medal, 1 point for each bronze medal.
@@ -76,7 +76,7 @@ Another issue is the overall structure of the code. Due to time limitations near
 
 No other minor or major issues of note that are known or suspected.
 
-Inefficiencies: Due to my lack of experience with creating frontends using Python and Flask, I didn't quite figure out how to create the frontend using a more refined framework, such as React, which would have made it so that I wouldn't have had to do as much script injection in the HMTL file. That would be a major win to get implemented for the future of this project.
+Inefficiencies: Due to my lack of experience with creating frontends using Python and Flask, I didn't quite figure out how to create the frontend using a more refined framework, such as React, which would have made it so that I wouldn't have had to do as much script injection in the HTML file. That would be a major win to get implemented for the future of this project.
 
 ## Future Work
 Future work includes the following 2 features that were on my wish-list of items if I had time that I didn't quite get to:
